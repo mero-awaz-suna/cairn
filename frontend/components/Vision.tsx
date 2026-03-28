@@ -14,7 +14,6 @@ export default function Vision() {
           <h2 className={styles.title}>Mental health support that meets you at the moment you need it — not weeks later.</h2>
           <p className={styles.sub}>No waiting lists. No stigma. No commitment. Just a circle of people who get it, exactly when you need them most.</p>
           <p className={styles.audience}>Built for students and professionals facing career pressure, burnout, and uncertainty — everywhere.</p>
-          <button className={styles.cta}>Start Speaking Today</button>
         </div>
       </section>
       <footer className={styles.footer}>

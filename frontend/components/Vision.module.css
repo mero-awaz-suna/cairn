@@ -2,16 +2,16 @@
 .bg {
   position: absolute; inset: 0;
   background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&q=80') center center / cover no-repeat;
-  opacity: 0.2;
+  opacity: 0.12;
 }
 .overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(180deg, var(--night) 0%, rgba(13,26,16,0.8) 50%, var(--night) 100%);
+  background: linear-gradient(180deg, var(--night) 0%, rgba(13,26,16,0.9) 50%, var(--night) 100%);
 }
 .content { position: relative; z-index: 2; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
 .title { font-family: var(--font-display); font-size: 2.4rem; font-weight: 400; color: var(--stone-light); line-height: 1.35; margin: 32px 0 24px; }
 .sub { font-size: 1.05rem; color: var(--moss-light); line-height: 1.7; margin-bottom: 16px; }
-.audience { font-size: 0.88rem; color: rgba(232,220,196,0.4); font-style: italic; margin-bottom: 40px; }
+.audience { font-size: 0.88rem; color: rgba(232,220,196,0.72); font-style: italic; margin-bottom: 40px; }
 .cta {
   background: var(--stone); color: var(--night); border: none;
   padding: 18px 48px; border-radius: 6px;
@@ -28,7 +28,7 @@
 .footerName { font-family: var(--font-display); font-size: 1.2rem; color: var(--stone); }
 .footerTag { font-size: 0.8rem; color: var(--forest-mid); margin-bottom: 24px; font-style: italic; }
 .footerLinks { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; }
-.footerLinks a { color: rgba(232,220,196,0.4); text-decoration: none; font-size: 0.8rem; transition: color 0.3s; }
+.footerLinks a { color: rgba(232,220,196,0.72); text-decoration: none; font-size: 0.8rem; transition: color 0.3s; }
 .footerLinks a:hover { color: var(--stone-light); }
 .footerCopy { font-size: 0.7rem; color: var(--forest-mid); }
 

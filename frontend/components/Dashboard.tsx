@@ -1,80 +1,113 @@
 "use client";
 
 import styles from "./Dashboard.module.css";
-import CairnLogo from "./CairnLogo";
 
-export default function Dashboard() {
+const safetyStream = [
+  "Escalation probability: low and stable",
+  "Trigger vocabulary detected: gently redirected",
+  "Grounding contribution ratio: healthy",
+  "Facilitator intervention count: 2",
+];
+
+const sessionMoments = [
+  {
+    step: "00:03",
+    title: "High-stress member voiced panic",
+    action: "AI facilitator asked for paced breathing check-in",
+  },
+  {
+    step: "00:09",
+    title: "Recovered member shared practical grounding habit",
+    action: "Group repeated action in-chat and reflected impact",
+  },
+  {
+    step: "00:14",
+    title: "Conversation drifted toward hopeless framing",
+    action: "Facilitator reframed with constructive prompt",
+  },
+];
+
+export default function JoinSession() {
   return (
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <span className={styles.label}>Your Dashboard</span>
-          <h2 className={styles.title}>Everything in one calm place</h2>
+          <h2 className={styles.title}>Real-time support session with active AI facilitation</h2>
+          <p className={styles.sub}>
+            We match participants by shared problem embedding but maintain mixed stress levels, so support remains empathic and
+            emotionally grounding.
+          </p>
         </div>
 
-        {/* Dashboard frame with mountain bg */}
-        <div className={styles.frame}>
-          <div className={styles.frameBg} />
-          <div className={styles.frameOverlay} />
+        <div className={styles.grid}>
+          <article className={styles.card}>
+            <h3>Live cluster snapshot</h3>
+            <ul className={styles.snapshotList}>
+              <li>
+                <span>Topic Match:</span>
+                <strong>Career instability and trauma-linked anxiety</strong>
+              </li>
+              <li>
+                <span>Participants:</span>
+                <strong>4 total (1 high stress, 2 mid recovery, 1 stable grounding)</strong>
+              </li>
+              <li>
+                <span>Session Goal:</span>
+                <strong>Reduce panic intensity and define one safe next action</strong>
+              </li>
+            </ul>
 
-          {/* Nav */}
-          <div className={styles.dashNav}>
-            <div className={styles.dashBrand}>
-              <CairnLogo size={26} />
-              <span>Cairn</span>
+            <div className={styles.availabilityRow}>
+              <div>
+                <p className={styles.value}>2 min</p>
+                <p className={styles.caption}>Estimated wait</p>
+              </div>
             </div>
-            <div className={styles.dashRight}>
-              <div className={styles.avatar} />
-              <button className={styles.dashHelp}>
-                <CairnLogo size={14} />
-                I Need Help
-              </button>
+          </article>
+
+          <article className={styles.card}>
+            <h3>AI safety monitor</h3>
+            <div className={styles.monitorList}>
+              {safetyStream.map((item) => (
+                <p key={item}>{item}</p>
+              ))}
             </div>
+
+            <div className={styles.guardrail}>
+              The facilitator can pause harmful spirals, encourage grounding language, and escalate to human-led safety support when
+              risk rises.
+            </div>
+          </article>
+        </div>
+
+        {/* <article className={styles.timelineCard}>
+          <div className={styles.timelineHeader}>
+            <h3>Session recording and LLM outcome summary</h3>
+            <span>Auto-generated after close</span>
           </div>
-
-          {/* Persona card */}
-          <div className={styles.persona}>
-            <h3 className={styles.personaTitle}>Persona Card</h3>
-            <p className={styles.personaSub}>Finding Ground · 68% hope index</p>
-            <div className={styles.stones}>
-              {[1, 2, 3, 4].map((i) => <CairnLogo key={i} size={52} />)}
-            </div>
-            <div className={styles.slider}>
-              <div className={styles.sliderFill} />
-              <div className={styles.sliderDot} />
-            </div>
-          </div>
-
-          {/* Bottom widgets */}
-          <div className={styles.widgets}>
-            <div className={styles.widget}>
-              <div className={styles.widgetLabel}>Voice Journal</div>
-              <div className={styles.widgetBig}>60<span className={styles.widgetUnit}>second</span></div>
-              <div className={styles.mountainArt}>
-                <svg viewBox="0 0 200 50" fill="none" preserveAspectRatio="none">
-                  <path d="M0 50 L20 30 L45 40 L70 18 L95 28 L120 8 L150 22 L175 12 L200 25 L200 50Z" fill="url(#mg)" opacity="0.5"/>
-                  <defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="50"><stop offset="0%" stopColor="#E8DCC4"/><stop offset="100%" stopColor="#C4B08A" stopOpacity="0.2"/></linearGradient></defs>
-                </svg>
-              </div>
-              <div className={styles.playIcon}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21"/></svg>
-              </div>
-            </div>
-
-            <div className={styles.widget}>
-              <div className={styles.widgetLabel}>
-                Relay Streak
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
-              </div>
-              <div className={styles.widgetBig}>7<span className={styles.widgetUnit}>Day</span></div>
-              <div className={styles.dots}>
-                {[1,2,3,4,5,6].map(i => <div key={i} className={styles.dot} />)}
-                <div className={styles.dotMore}>
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+          <div className={styles.timelineList}>
+            {sessionMoments.map((moment) => (
+              <div key={moment.step} className={styles.timelineItem}>
+                <p className={styles.time}>{moment.step}</p>
+                <div>
+                  <h4>{moment.title}</h4>
+                  <p>{moment.action}</p>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
+
+          <div className={styles.summaryBox}>
+            <h4>What participants learned</h4>
+            <p>
+              Members reported lower panic and adopted one repeatable regulation skill: 4-6 breath cadence before speaking during
+              conflict spikes.
+            </p>
+          </div>
+        </article> */}
+
+        <div className={styles.bottomAction}>
+          <button type="button" className={styles.pageBtn}>Join a Session</button>
         </div>
       </div>
     </section>

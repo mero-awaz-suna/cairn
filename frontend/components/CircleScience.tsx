@@ -2,58 +2,99 @@
 
 import styles from "./CircleScience.module.css";
 
-const stages = [
-  { label: "In the Storm", color: "#D4A574", glow: "rgba(212,165,116,0.4)", desc: "1 person — triggered, needs to be heard right now", count: "1" },
-  { label: "Finding Ground", color: "#7a9a7e", glow: "rgba(122,154,126,0.4)", desc: "1–2 people — still raw, but processing", count: "1–2" },
-  { label: "Through It", color: "#4ADE80", glow: "rgba(74,222,128,0.4)", desc: "1 person — recovered, offers real hope", count: "1" },
-  { label: "Different Paths", color: "#5EACB0", glow: "rgba(94,172,176,0.4)", desc: "No two members share the same trauma type", count: "—" },
+const pipeline = [
+  {
+    title: "Problem Embedding Match",
+    detail: "We cluster by shared PTSD-related themes and lived context, not by exact symptom intensity.",
+  },
+  {
+    title: "Voice Stress Stratification",
+    detail: "Tone, pacing, and acoustic strain estimate stress band so each group has mixed recovery stages.",
+  },
+  {
+    title: "Balance Constraint Solver",
+    detail: "Each micro-cluster is composed with grounding participants to reduce emotional escalation risk.",
+  },
+  {
+    title: "AI Facilitation Guardrails",
+    detail: "Real-time moderation redirects harmful spirals and nudges toward constructive, supportive dialogue.",
+  },
 ];
-const factors = ["Region", "Language", "Life Stage", "Occupation", "Stressor Type"];
 
-export default function CircleScience() {
+const stressMix = [
+  { band: "High Activation", share: "25%", role: "Urgent expression and containment" },
+  { band: "Mid Recovery", share: "50%", role: "Mutual reflection and coping exchange" },
+  { band: "Stable Grounding", share: "25%", role: "Hope transfer and emotional anchoring" },
+];
+
+const safetySignals = ["Trigger drift detection", "Escalation phrase interrupt", "Gentle reframe prompts", "Human escalation flag"];
+
+export default function FindMyCircle() {
   return (
-    <section className={styles.section} id="circle">
-      <div className={styles.bg} />
+    <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <span className={styles.label}>The Science</span>
-          <h2 className={styles.title}>We design groups like ecosystems</h2>
-          <p className={styles.sub}>Every circle is deliberately balanced — because a room full of people in crisis only spirals deeper.</p>
+          <h2 className={styles.title}>Balanced support clusters, not distress-only rooms</h2>
+          <p className={styles.sub}>
+            We intentionally mix people with similar core struggles but different stress levels so sessions stabilize participants
+            instead of amplifying panic.
+          </p>
         </div>
-        <div className={styles.grid}>
-          <div className={styles.vizWrap}>
-            <div className={styles.facilBadge}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-              AI Facilitator is listening
+
+        <div className={styles.layout}>
+          <div className={styles.pipelinePanel}>
+            <h3>How clusters are formed</h3>
+            <div className={styles.pipelineList}>
+              {pipeline.map((item, index) => (
+                <article key={item.title} className={styles.pipelineItem}>
+                  <span>{index + 1}</span>
+                  <div>
+                    <h4>{item.title}</h4>
+                    <p>{item.detail}</p>
+                  </div>
+                </article>
+              ))}
             </div>
-            <div className={styles.circleCenter}>
-              <div className={styles.centerLabel}>Your Circle</div>
-              <div className={styles.centerSub}>Balanced for Hope</div>
+          </div>
+
+          {/* <div className={styles.mixPanel}>
+            <h3>Target cluster composition</h3>
+            <div className={styles.mixList}>
+              {stressMix.map((item) => (
+                <article key={item.band} className={styles.mixItem}>
+                  <div className={styles.mixTop}>
+                    <h4>{item.band}</h4>
+                    <span>{item.share}</span>
+                  </div>
+                  <p>{item.role}</p>
+                  <div className={styles.mixBarTrack}>
+                    <div className={styles.mixBarFill} style={{ width: item.share }} />
+                  </div>
+                </article>
+              ))}
             </div>
-            {stages.map((s, i) => (
-              <div key={s.label} className={styles.orb} style={{ "--angle": `${i * 90 - 45}deg`, "--color": s.color, "--glow": s.glow, "--delay": `${i * 0.3}s` } as React.CSSProperties}>
-                <div className={styles.orbBall} />
-                <span className={styles.orbLabel}>{s.label}</span>
-              </div>
+
+            <div className={styles.systemNote}>
+              <strong>Outcome objective:</strong> decrease emotional volatility while preserving high empathy and felt understanding.
+            </div>
+          </div> */}
+        </div>
+
+        <div className={styles.safety}>
+          <h3>AI facilitator safeguards during live sessions</h3>
+          <div className={styles.signalList}>
+            {safetySignals.map((signal) => (
+              <span key={signal}>{signal}</span>
             ))}
           </div>
-          <div className={styles.cards}>
-            {stages.map(s => (
-              <div key={s.label} className={styles.card}>
-                <div className={styles.dot} style={{ background: s.color }} />
-                <div className={styles.cardText}>
-                  <div className={styles.cardTitle}>{s.label}</div>
-                  <div className={styles.cardDesc}>{s.desc}</div>
-                </div>
-                <div className={styles.cardCount}>{s.count}</div>
-              </div>
-            ))}
-          </div>
+          <p>
+            The facilitator does not replace human empathy. It protects conversational safety and keeps the group moving toward
+            grounding and practical next steps.
+          </p>
         </div>
-        <div className={styles.matchSection}>
-          <h3 className={styles.matchTitle}>Members are matched on</h3>
-          <div className={styles.pills}>{factors.map(f => <span key={f} className={styles.pill}>{f}</span>)}</div>
-          <p className={styles.matchNote}>So conversations feel familiar, not foreign.</p>
+
+        <div className={styles.bottomAction}>
+          <button type="button" className={styles.pageBtn}>Find My Circle</button>
         </div>
       </div>
     </section>

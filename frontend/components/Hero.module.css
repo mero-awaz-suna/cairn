@@ -23,10 +23,10 @@
   inset: 0;
   background:
     linear-gradient(180deg,
-      rgba(13, 26, 16, 0.5) 0%,
-      rgba(44, 62, 47, 0.45) 40%,
-      rgba(44, 62, 47, 0.6) 70%,
-      rgba(13, 26, 16, 0.95) 100%
+      rgba(13, 26, 16, 0.62) 0%,
+      rgba(44, 62, 47, 0.56) 40%,
+      rgba(44, 62, 47, 0.72) 70%,
+      rgba(13, 26, 16, 0.97) 100%
     );
   z-index: 1;
 }
@@ -34,7 +34,7 @@
 .bgVignette {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 70% 60% at 50% 40%, transparent 0%, rgba(13, 26, 16, 0.4) 100%);
+  background: radial-gradient(ellipse 70% 60% at 50% 40%, transparent 0%, rgba(13, 26, 16, 0.52) 100%);
   z-index: 2;
 }
 
@@ -88,7 +88,7 @@
 
 .subtitle {
   font-size: 1.05rem;
-  color: rgba(232, 220, 196, 0.7);
+  color: rgba(232, 220, 196, 0.88);
   max-width: 480px;
   margin: 0 auto 40px;
   line-height: 1.7;
@@ -126,9 +126,9 @@
   position: relative;
   z-index: 10;
   width: 100%;
-  background: rgba(13, 26, 16, 0.92);
+  background: rgba(13, 26, 16, 0.96);
   backdrop-filter: blur(20px);
-  border-top: 1px solid rgba(217, 200, 169, 0.08);
+  border-top: 1px solid rgba(217, 200, 169, 0.16);
   padding: 36px 40px;
 }
 
@@ -179,7 +179,7 @@
 
 .featureSub {
   font-size: 0.72rem;
-  color: rgba(232, 220, 196, 0.45);
+  color: rgba(232, 220, 196, 0.7);
 }
 
 @media (max-width: 768px) {

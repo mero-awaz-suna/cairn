@@ -3,55 +3,89 @@
 import { useState } from "react";
 import styles from "./MemoryWall.module.css";
 
-const categories = ["Career Pressure", "Burnout", "Academic Stress"];
-const echoes: Record<string, { text: string; tag: string }[]> = {
-  "Career Pressure": [
-    { text: "Breaking tasks into 15-minute chunks helped me stop feeling overwhelmed by the big picture.", tag: "Deadline Pressure" },
-    { text: "Pausing to breathe every hour sounds simple but it was the only thing that kept me grounded.", tag: "Work Overload" },
-    { text: "Hearing someone say 'I almost quit too' made me realize I wasn't weak — I was human.", tag: "Imposter Syndrome" },
-    { text: "The group helped me see that saying no to one project wasn't career suicide.", tag: "Boundaries" },
+const categories = ["Career Shock", "Burnout", "Academic Trauma"];
+
+const summaries: Record<string, { title: string; insight: string; outcome: string; members: string }[]> = {
+  "Career Shock": [
+    {
+      title: "Layoff-trigger panic loop",
+      insight: "Members learned to separate immediate safety actions from catastrophic career narratives.",
+      outcome: "Self-reported panic reduced from severe to moderate by session end.",
+      members: "4-person mixed-stage cluster",
+    },
+    {
+      title: "Interview freeze response",
+      insight: "A stable member modeled a pre-interview grounding script that others adopted.",
+      outcome: "Participants completed one exposure step within 24 hours.",
+      members: "5-person mixed-stage cluster",
+    },
   ],
   "Burnout": [
-    { text: "Someone in my circle said 'rest is productive' and I wrote it on my mirror.", tag: "Recovery" },
-    { text: "Learning that burnout isn't laziness — it's your body forcing you to stop — changed everything.", tag: "Understanding" },
-    { text: "The 15-minute walk suggestion from a circle member became my daily ritual.", tag: "Small Steps" },
-    { text: "Knowing others in tech also felt empty despite success made me feel less broken.", tag: "Validation" },
+    {
+      title: "Emotional numbness after overwork",
+      insight: "The group normalized exhaustion and built a low-friction recovery routine.",
+      outcome: "Sleep quality and focus scores improved over one week follow-up.",
+      members: "4-person mixed-stage cluster",
+    },
+    {
+      title: "Identity collapse after prolonged stress",
+      insight: "Members reframed self-worth away from output metrics and used short reflection prompts.",
+      outcome: "Rumination intensity dropped and daily functioning stabilized.",
+      members: "5-person mixed-stage cluster",
+    },
   ],
-  "Academic Stress": [
-    { text: "A grad student shared how they stopped comparing timelines. That freed me.", tag: "Comparison" },
-    { text: "Breaking my thesis into daily micro-goals came from a circle insight. Game changer.", tag: "Strategy" },
-    { text: "Someone reminded me that my worth isn't my GPA. I needed that from a stranger.", tag: "Self-Worth" },
-    { text: "The breathing exercise shared in a past circle became my pre-exam ritual.", tag: "Coping" },
+  "Academic Trauma": [
+    {
+      title: "Exam-triggered dissociation",
+      insight: "Participants practiced voice-guided orientation cues during stress spikes.",
+      outcome: "Acute shutdown episodes reduced during the next exam cycle.",
+      members: "4-person mixed-stage cluster",
+    },
+    {
+      title: "Thesis paralysis and shame spiral",
+      insight: "A recovered participant shared a micro-task loop that reduced avoidance.",
+      outcome: "Members completed first action step within same day.",
+      members: "4-person mixed-stage cluster",
+    },
   ],
 };
 
-export default function MemoryWall() {
-  const [active, setActive] = useState("Career Pressure");
+export default function ViewPreviousSessions() {
+  const [active, setActive] = useState("Career Shock");
+
   return (
-    <section className={styles.section} id="memory-wall">
-      <svg className={styles.mountainLine} viewBox="0 0 1200 100" fill="none" preserveAspectRatio="none">
-        <path d="M0 70 L100 45 L180 58 L250 25 L320 48 L400 15 L480 38 L550 10 L620 35 L700 8 L780 30 L850 15 L920 38 L1000 22 L1080 45 L1200 30" stroke="#C4B08A" strokeWidth="1.5" strokeLinecap="round" opacity="0.35"/>
-        <path d="M0 80 L120 55 L200 65 L280 35 L360 55 L440 25 L520 48 L600 18 L680 42 L760 15 L840 38 L920 24 L1000 45 L1100 32 L1200 50" stroke="#C4B08A" strokeWidth="1" strokeLinecap="round" opacity="0.2"/>
-      </svg>
+    <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <span className={styles.label}>Memory Wall</span>
-          <h2 className={styles.title}>Echoes from Past Circles</h2>
-          <p className={styles.sub}>AI-curated summaries from people who faced what you&apos;re facing. Distilled to what helped.</p>
+          <h2 className={styles.title}>LLM summaries from past clusters</h2>
+          <p className={styles.sub}>
+            Every completed session is transcribed and summarized into practical lessons, emotional outcomes, and next-step coping
+            actions.
+          </p>
         </div>
+
         <div className={styles.tabs}>
-          {categories.map(c => (
-            <button key={c} className={`${styles.tab} ${active === c ? styles.tabActive : ""}`} onClick={() => setActive(c)}>{c}</button>
+          {categories.map((category) => (
+            <button key={category} className={`${styles.tab} ${active === category ? styles.tabActive : ""}`} onClick={() => setActive(category)}>
+              {category}
+            </button>
           ))}
         </div>
-        <div className={styles.grid}>
-          {(echoes[active] || []).map((e, i) => (
-            <div key={i} className={styles.echoCard} style={{ animationDelay: `${i * 0.1}s` }}>
-              <div className={styles.echoTag}>{e.tag}</div>
-              <p className={styles.echoText}>{e.text}</p>
-              <div className={styles.echoMeta}>🪨 From a past circle</div>
-            </div>
+
+        {/* <div className={styles.grid}>
+          {(summaries[active] || []).map((item) => (
+            <article key={item.title} className={styles.summaryCard}>
+              <h3>{item.title}</h3>
+              <p className={styles.members}>{item.members}</p>
+              <p className={styles.insight}>{item.insight}</p>
+              <p className={styles.outcome}>{item.outcome}</p>
+              <button type="button" className={styles.replayBtn}>Open Summary + Recording</button>
+            </article>
           ))}
+        </div> */}
+
+        <div className={styles.bottomAction}>
+          <button type="button" className={`${styles.pageBtn} hover:cursor-pointer`}>View Previous Sessions</button>
         </div>
       </div>
     </section>

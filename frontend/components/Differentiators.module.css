@@ -1,11 +1,11 @@
 .section { padding: 120px 32px; background: var(--night); }
 .container { max-width: 1100px; margin: 0 auto; }
 .header { text-align: center; margin-bottom: 72px; }
-.label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(232,220,196,0.4); margin-bottom: 16px; }
+.label { display: block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(232,220,196,0.72); margin-bottom: 16px; }
 .title { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; color: var(--stone-light); }
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
 .card {
-  padding: 40px 28px; background: rgba(20,31,22,0.65);
+  padding: 40px 28px; background: rgba(20,31,22,0.78);
   border: 1px solid var(--glass-border); border-radius: 20px;
   backdrop-filter: blur(10px); text-align: center;
   opacity: 0; animation: fadeInUp 0.6s ease-out forwards;

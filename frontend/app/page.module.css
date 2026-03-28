@@ -1,0 +1,27 @@
+.main {
+  min-height: 100svh;
+  background: var(--deep-lake);
+}
+
+.content {
+  padding-top: 0;
+  min-height: 100svh;
+}
+
+.homeContent {
+  padding-top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-top: 0;
+  }
+
+  .homeContent {
+    padding-top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+}

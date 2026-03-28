@@ -26,9 +26,6 @@ export default function Hero() {
           A voice journal that knows when you need people — and finds exactly the right ones.
         </p>
 
-        <div className={styles.cta}>
-          <button className={styles.primaryBtn}>Start Speaking Today</button>
-        </div>
       </div>
 
       {/* Dark bottom feature bar matching design image 8 */}

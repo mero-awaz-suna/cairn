@@ -27,17 +27,17 @@
 }
 .cardRow {
   display: flex; justify-content: space-between; align-items: baseline;
-  margin-bottom: 20px; font-size: 0.85rem; color: rgba(232,220,196,0.5);
+  margin-bottom: 20px; font-size: 0.85rem; color: rgba(232,220,196,0.72);
 }
 .bigNum { font-family: var(--font-display); font-size: 2rem; color: var(--stone-light); font-weight: 300; }
 .bigNum sup { font-size: 0.9rem; opacity: 0.5; }
-.cardLabel { font-size: 0.8rem; color: rgba(232,220,196,0.5); text-align: center; margin-bottom: 16px; letter-spacing: 0.03em; }
+.cardLabel { font-size: 0.8rem; color: rgba(232,220,196,0.72); text-align: center; margin-bottom: 16px; letter-spacing: 0.03em; }
 
 /* Waveform */
 .waveform { display: flex; align-items: center; gap: 3px; height: 56px; margin-bottom: 20px; }
 .waveBar {
   flex: 1; background: linear-gradient(0deg, var(--forest-mid), var(--moss-light));
-  border-radius: 2px; min-height: 4px; animation: waveform 1.5s ease-in-out infinite alternate; opacity: 0.6;
+  border-radius: 2px; min-height: 4px; animation: waveform 1.5s ease-in-out infinite alternate; opacity: 0.82;
 }
 .micBtn {
   width: 40px; height: 40px; border-radius: 50%; background: white;
@@ -48,19 +48,19 @@
 /* Persona */
 .personaStage { font-family: var(--font-display); font-size: 1.2rem; color: var(--stone-light); margin-bottom: 20px; text-align: center; }
 .barRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.barLabel { font-size: 0.72rem; color: rgba(232,220,196,0.4); white-space: nowrap; }
+.barLabel { font-size: 0.72rem; color: rgba(232,220,196,0.64); white-space: nowrap; }
 .barTrack { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
 .barFill { height: 100%; background: linear-gradient(90deg, var(--forest-mid), var(--hope-green)); border-radius: 3px; }
 .barVal { font-size: 0.82rem; color: var(--hope-green); font-weight: 600; }
 .tags { display: flex; gap: 8px; flex-wrap: wrap; }
 .tag {
   font-size: 0.68rem; padding: 4px 12px; border-radius: 100px;
-  background: rgba(217,200,169,0.08); color: rgba(232,220,196,0.5); border: 1px solid var(--glass-border);
+  background: rgba(217,200,169,0.14); color: rgba(232,220,196,0.74); border: 1px solid var(--glass-border);
 }
 
 /* Circle */
 .memberList { display: flex; flex-direction: column; gap: 8px; }
-.member { display: flex; align-items: center; gap: 12px; padding: 7px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.8rem; color: rgba(232,220,196,0.5); }
+.member { display: flex; align-items: center; gap: 12px; padding: 7px 12px; background: rgba(255,255,255,0.08); border-radius: 8px; font-size: 0.8rem; color: rgba(232,220,196,0.74); }
 .memberDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
 
 /* Summary */
