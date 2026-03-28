@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environment
+venv
+.env
+
+# Environment variables
+.env
+.env.local
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node (if you have frontend)
+node_modules/
+.next/
+dist/
+
+# Supabase (optional local)
+.supabase/
+
+# Build
+build/
