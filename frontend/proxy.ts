@@ -10,6 +10,12 @@ const AUTH_COOKIE_CANDIDATES = [
   "jwt",
 ];
 
+const PUBLIC_ROUTES = ["/login", "/register"];
+
+function isPublicRoute(pathname: string) {
+  return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
+}
+
 function isAuthenticated(request: NextRequest) {
   return AUTH_COOKIE_CANDIDATES.some((name) => {
     const value = request.cookies.get(name)?.value;
@@ -18,19 +24,29 @@ function isAuthenticated(request: NextRequest) {
 }
 
 export function proxy(request: NextRequest) {
-  // Temporarily disabled to unblock internal page development.
-  return NextResponse.next();
+  const { pathname, search } = request.nextUrl;
+  const authenticated = isAuthenticated(request);
+  const isPublic = isPublicRoute(pathname);
 
-  if (isAuthenticated(request)) {
+  if (!authenticated && !isPublic) {
+    const loginUrl = new URL("/login", request.url);
+    loginUrl.searchParams.set("next", `${pathname}${search}`);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  if (authenticated && isPublic) {
+    const next = request.nextUrl.searchParams.get("next");
+    const redirectPath = next && next.startsWith("/") ? next : "/";
+    return NextResponse.redirect(new URL(redirectPath, request.url));
+  }
+
+  if (authenticated) {
     return NextResponse.next();
   }
 
-  const loginUrl = new URL("/login", request.url);
-  loginUrl.searchParams.set("next", request.nextUrl.pathname);
-
-  return NextResponse.redirect(loginUrl);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml).*)"],
 };

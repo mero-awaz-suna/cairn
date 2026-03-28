@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { clearStoredAuth } from "@/lib/auth-client";
 import CairnLogo from "./CairnLogo";
 import styles from "./Navbar.module.css";
 
-export type MenuView = "home" | "findMyCircle" | "joinSession" | "viewPreviousSessions" | "immediateHelp";
+export type MenuView = "home" | "findMyCircle" | "viewMyCircle" | "journal" | "joinSession" | "viewPreviousSessions" | "memories";
 
 type NavbarProps = {
   activeView: MenuView;
@@ -15,13 +17,55 @@ type NavbarProps = {
 const MENU_ITEMS: Array<{ key: MenuView; label: string }> = [
   { key: "home", label: "Home" },
   { key: "findMyCircle", label: "Find My Circle" },
+  { key: "viewMyCircle", label: "View My Circle" },
+  { key: "journal", label: "Journal" },
   { key: "joinSession", label: "Join a Session" },
   { key: "viewPreviousSessions", label: "View Previous Sessions" },
-  { key: "immediateHelp", label: "Immediate Help" },
+  { key: "memories", label: "Memories" },
 ];
 
 export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!profileMenuOpen) {
+      return;
+    }
+
+    function handleClickOutside(event: MouseEvent) {
+      if (!profileMenuRef.current) {
+        return;
+      }
+
+      if (!profileMenuRef.current.contains(event.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setProfileMenuOpen(false);
+      }
+    }
+
+    window.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [profileMenuOpen]);
+
+  function handleLogout() {
+    clearStoredAuth();
+    setProfileMenuOpen(false);
+    setMenuOpen(false);
+    router.replace("/login");
+  }
 
   return (
     <nav className={`${styles.nav} ${isHome ? "" : styles.navContrast}`}>
@@ -33,6 +77,7 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
           onClick={() => {
             onChangeView("home");
             setMenuOpen(false);
+            setProfileMenuOpen(false);
           }}
         >
           <CairnLogo size={32} />
@@ -45,6 +90,7 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
               onClick={() => {
                 onChangeView(item.key);
                 setMenuOpen(false);
+                setProfileMenuOpen(false);
               }}
               className={`${styles.linkBtn} ${activeView === item.key ? styles.linkActive : ""}`}
             >
@@ -53,12 +99,27 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
           ))}
         </div>
         <div className={styles.actions}>
-          <button className={styles.profileBtn} aria-label="Profile">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M20 21a8 8 0 0 0-16 0" />
-              <circle cx="12" cy="8" r="4" />
-            </svg>
-          </button>
+          <div className={styles.profileMenu} ref={profileMenuRef}>
+            <button
+              type="button"
+              className={styles.profileBtn}
+              aria-label="Profile"
+              aria-haspopup="menu"
+              aria-controls="profile-menu"
+              aria-expanded={profileMenuOpen}
+              onClick={() => setProfileMenuOpen((previous) => !previous)}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 21a8 8 0 0 0-16 0" />
+                <circle cx="12" cy="8" r="4" />
+              </svg>
+            </button>
+            <div id="profile-menu" className={styles.profileDropdown} data-open={profileMenuOpen ? "true" : "false"} role="menu" aria-label="Profile options">
+              <button type="button" className={styles.profileMenuItem} role="menuitem" onClick={handleLogout}>
+                Log out
+              </button>
+            </div>
+          </div>
           <button
             className={styles.burger}
             onClick={() => setMenuOpen(!menuOpen)}

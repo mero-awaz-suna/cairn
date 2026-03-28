@@ -2,17 +2,23 @@ const TOKEN_STORAGE_KEY = "cairn.jwt";
 const REFRESH_STORAGE_KEY = "cairn.refresh";
 const USER_STORAGE_KEY = "cairn.user";
 const AUTH_COOKIE_KEY = "cairn_jwt";
+const TOKEN_COOKIE_CANDIDATES = [
+  AUTH_COOKIE_KEY,
+  "cairn.jwt",
+  "access_token",
+  "accessToken",
+  "token",
+  "jwt",
+];
 const GOOGLE_LOGIN_START_URL = "http://127.0.0.1:8000/auth/google/start";
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "").replace(/\/$/, "");
+const API_BASE_URL = (
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"
+).replace(/\/$/, "");
 
 type AuthPayload = {
   email: string;
   password: string;
-};
-
-type RegisterPayload = AuthPayload & {
-  fullName: string;
 };
 
 type AuthResponse = {
@@ -101,9 +107,9 @@ function persistRefreshToken(refreshToken: string, remember: boolean) {
   fallbackStorage.removeItem(REFRESH_STORAGE_KEY);
 }
 
-async function postAuth<TPayload extends AuthPayload | RegisterPayload>(
+async function postAuth(
   endpoint: string,
-  payload: TPayload,
+  payload: AuthPayload,
 ): Promise<AuthResponse> {
   const response = await fetch(getAuthEndpoint(endpoint), {
     method: "POST",
@@ -131,7 +137,7 @@ export async function loginWithJwt(payload: AuthPayload, remember: boolean) {
   persistAuth(token, data.user, remember);
 }
 
-export async function registerWithJwt(payload: RegisterPayload, remember: boolean) {
+export async function registerWithJwt(payload: AuthPayload, remember: boolean) {
   const data = await postAuth("/auth/register", payload);
   const token = extractToken(data);
 
@@ -173,10 +179,36 @@ export function getStoredToken() {
     return null;
   }
 
-  return (
+  const storageToken =
     window.localStorage.getItem(TOKEN_STORAGE_KEY) ??
-    window.sessionStorage.getItem(TOKEN_STORAGE_KEY)
-  );
+    window.sessionStorage.getItem(TOKEN_STORAGE_KEY);
+
+  if (storageToken) {
+    return storageToken;
+  }
+
+  const cookieMap = document.cookie
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .reduce<Record<string, string>>((accumulator, pair) => {
+      const [rawKey, ...rawValue] = pair.split("=");
+      if (!rawKey) {
+        return accumulator;
+      }
+
+      accumulator[rawKey] = rawValue.join("=");
+      return accumulator;
+    }, {});
+
+  for (const cookieName of TOKEN_COOKIE_CANDIDATES) {
+    const token = cookieMap[cookieName];
+    if (token) {
+      return decodeURIComponent(token);
+    }
+  }
+
+  return null;
 }
 
 export function clearStoredAuth() {
@@ -193,7 +225,9 @@ export function clearStoredAuth() {
   document.cookie = `${AUTH_COOKIE_KEY}=; Path=/; Max-Age=0; SameSite=Lax`;
 }
 
-export async function loginWithGoogle() {
-  const next = encodeURIComponent(`${window.location.origin}/login`);
+export async function loginWithGoogle(nextPath = "/") {
+  const safeNextPath = nextPath.startsWith("/") ? nextPath : "/";
+  const callbackUrl = `${window.location.origin}/login?next=${encodeURIComponent(safeNextPath)}`;
+  const next = encodeURIComponent(callbackUrl);
   window.location.href = `${GOOGLE_LOGIN_START_URL}?next=${next}`;
 }

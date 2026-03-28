@@ -1,100 +1,155 @@
 "use client";
 
+import { useState } from "react";
+import { getStoredToken } from "@/lib/auth-client";
 import styles from "./CircleScience.module.css";
 
-const pipeline = [
-  {
-    title: "Problem Embedding Match",
-    detail: "We cluster by shared PTSD-related themes and lived context, not by exact symptom intensity.",
-  },
-  {
-    title: "Voice Stress Stratification",
-    detail: "Tone, pacing, and acoustic strain estimate stress band so each group has mixed recovery stages.",
-  },
-  {
-    title: "Balance Constraint Solver",
-    detail: "Each micro-cluster is composed with grounding participants to reduce emotional escalation risk.",
-  },
-  {
-    title: "AI Facilitation Guardrails",
-    detail: "Real-time moderation redirects harmful spirals and nudges toward constructive, supportive dialogue.",
-  },
-];
+const JOIN_CIRCLE_ENDPOINT = "http://127.0.0.1:8000/circles/join";
+const CIRCLES_BASE_ENDPOINT = "http://127.0.0.1:8000/circles";
+const LAST_CIRCLE_ID_STORAGE_KEY = "cairn.lastCircleId";
 
-const stressMix = [
-  { band: "High Activation", share: "25%", role: "Urgent expression and containment" },
-  { band: "Mid Recovery", share: "50%", role: "Mutual reflection and coping exchange" },
-  { band: "Stable Grounding", share: "25%", role: "Hope transfer and emotional anchoring" },
-];
-
-const safetySignals = ["Trigger drift detection", "Escalation phrase interrupt", "Gentle reframe prompts", "Human escalation flag"];
+type JoinLookupResponse = {
+  circle_id?: string;
+  status?: string;
+  message?: string;
+};
 
 export default function FindMyCircle() {
+  const [isFinding, setIsFinding] = useState(false);
+  const [isJoiningById, setIsJoiningById] = useState(false);
+  const [circleId, setCircleId] = useState("");
+  const [circleStatus, setCircleStatus] = useState("");
+  const [joinCircleId, setJoinCircleId] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+
+  function buildAuthHeaders(token: string | null, includeJsonContentType = false) {
+    return {
+      ...(includeJsonContentType ? { "Content-Type": "application/json" } : {}),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+  }
+
+  function persistCircleId(value: string) {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    window.localStorage.setItem(LAST_CIRCLE_ID_STORAGE_KEY, value);
+  }
+
+  async function handleFindCircle() {
+    setIsFinding(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(JOIN_CIRCLE_ENDPOINT, {
+        method: "POST",
+        headers: buildAuthHeaders(token, true),
+        body: "{}",
+      });
+
+      const data = (await response.json().catch(() => null)) as JoinLookupResponse | null;
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Unable to join a circle right now.");
+      }
+
+      if (!data?.circle_id) {
+        throw new Error("Circle ID was not returned by the server.");
+      }
+
+      setCircleId(data.circle_id);
+      setJoinCircleId(data.circle_id);
+      setCircleStatus(data.status ?? "");
+      persistCircleId(data.circle_id);
+      setMessage(data?.message ?? "Circle found. Use the Circle ID below to join.");
+    } catch (apiError) {
+      const apiMessage = apiError instanceof Error ? apiError.message : "Unable to join a circle right now.";
+      setError(apiMessage);
+    } finally {
+      setIsFinding(false);
+    }
+  }
+
+  async function handleJoinByCircleId() {
+    const targetCircleId = joinCircleId.trim();
+    if (!targetCircleId) {
+      setError("Please enter a circle ID.");
+      setMessage("");
+      return;
+    }
+
+    setIsJoiningById(true);
+    setError("");
+    setMessage("");
+
+    try {
+      const token = getStoredToken();
+      const endpoint = `${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}`;
+      const response = await fetch(endpoint, {
+        method: "GET",
+        headers: buildAuthHeaders(token),
+      });
+
+      const data = (await response.json().catch(() => null)) as { message?: string; status?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Unable to join this circle right now.");
+      }
+
+      setCircleId(targetCircleId);
+      persistCircleId(targetCircleId);
+      setMessage(data?.message ?? `Joined circle ${targetCircleId} successfully.`);
+    } catch (apiError) {
+      const apiMessage = apiError instanceof Error ? apiError.message : "Unable to join this circle right now.";
+      setError(apiMessage);
+    } finally {
+      setIsJoiningById(false);
+    }
+  }
+
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Balanced support clusters, not distress-only rooms</h2>
-          <p className={styles.sub}>
-            We intentionally mix people with similar core struggles but different stress levels so sessions stabilize participants
-            instead of amplifying panic.
-          </p>
-        </div>
+        <div className={styles.card}>
+          <h2 className={styles.title}>Find My Circle</h2>
+          <p className={styles.sub}>Tap once to retrieve your circle ID, then join with that ID.</p>
+          <button type="button" className={styles.pageBtn} onClick={handleFindCircle} disabled={isFinding}>
+            {isFinding ? "Finding..." : "Find Circle"}
+          </button>
 
-        <div className={styles.layout}>
-          <div className={styles.pipelinePanel}>
-            <h3>How clusters are formed</h3>
-            <div className={styles.pipelineList}>
-              {pipeline.map((item, index) => (
-                <article key={item.title} className={styles.pipelineItem}>
-                  <span>{index + 1}</span>
-                  <div>
-                    <h4>{item.title}</h4>
-                    <p>{item.detail}</p>
-                  </div>
-                </article>
-              ))}
+          {circleId ? (
+            <div className={styles.circleInfo}>
+              <p className={styles.circleIdText}>Circle ID: {circleId}</p>
+              {circleStatus ? <p className={styles.statusPill}>Status: {circleStatus}</p> : null}
             </div>
+          ) : null}
+
+          <div className={styles.joinRow}>
+            <input
+              className={styles.circleInput}
+              type="text"
+              value={joinCircleId}
+              onChange={(event) => setJoinCircleId(event.target.value)}
+              placeholder="Paste circle ID"
+              aria-label="Circle ID"
+              disabled={isJoiningById}
+            />
+            <button
+              type="button"
+              className={styles.joinBtn}
+              onClick={handleJoinByCircleId}
+              disabled={isJoiningById}
+            >
+              {isJoiningById ? "Joining..." : "Join"}
+            </button>
           </div>
 
-          {/* <div className={styles.mixPanel}>
-            <h3>Target cluster composition</h3>
-            <div className={styles.mixList}>
-              {stressMix.map((item) => (
-                <article key={item.band} className={styles.mixItem}>
-                  <div className={styles.mixTop}>
-                    <h4>{item.band}</h4>
-                    <span>{item.share}</span>
-                  </div>
-                  <p>{item.role}</p>
-                  <div className={styles.mixBarTrack}>
-                    <div className={styles.mixBarFill} style={{ width: item.share }} />
-                  </div>
-                </article>
-              ))}
-            </div>
-
-            <div className={styles.systemNote}>
-              <strong>Outcome objective:</strong> decrease emotional volatility while preserving high empathy and felt understanding.
-            </div>
-          </div> */}
-        </div>
-
-        <div className={styles.safety}>
-          <h3>AI facilitator safeguards during live sessions</h3>
-          <div className={styles.signalList}>
-            {safetySignals.map((signal) => (
-              <span key={signal}>{signal}</span>
-            ))}
-          </div>
-          <p>
-            The facilitator does not replace human empathy. It protects conversational safety and keeps the group moving toward
-            grounding and practical next steps.
-          </p>
-        </div>
-
-        <div className={styles.bottomAction}>
-          <button type="button" className={styles.pageBtn}>Find My Circle</button>
+          {message ? <p className={styles.success}>{message}</p> : null}
+          {error ? <p className={styles.error}>{error}</p> : null}
         </div>
       </div>
     </section>

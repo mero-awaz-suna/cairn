@@ -1,0 +1,164 @@
+.section {
+  padding: 136px 24px 72px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
+    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
+    linear-gradient(300deg, #a5b86d 0%, #5d9a6d 46%, #398c65 100%);
+}
+
+.container {
+  width: min(920px, 100%);
+  margin: 0 auto;
+}
+
+.card {
+  border-radius: 18px;
+  border: 1px solid rgba(245, 237, 220, 0.32);
+  background: rgba(11, 38, 41, 0.9);
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(7, 24, 26, 0.28);
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+  color: var(--stone-light);
+}
+
+.sub {
+  margin: 10px 0 16px;
+  color: #ece4d5;
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.formRow {
+  display: flex;
+  gap: 8px;
+}
+
+.circleInput {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid rgba(245, 237, 220, 0.26);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+  color: #f8f6f0;
+  background: rgba(4, 20, 21, 0.44);
+}
+
+.circleInput::placeholder {
+  color: rgba(245, 237, 220, 0.48);
+}
+
+.circleInput:focus {
+  outline: none;
+  border-color: rgba(167, 220, 162, 0.88);
+  box-shadow: 0 0 0 3px rgba(167, 220, 162, 0.2);
+}
+
+.loadBtn {
+  border: 1px solid rgba(147, 224, 140, 0.45);
+  background: rgba(11, 38, 41, 0.88);
+  color: #ddf8ca;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  min-width: 120px;
+}
+
+.loadBtn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+}
+
+.error {
+  margin: 12px 0 0;
+  border: 1px solid rgba(255, 151, 151, 0.42);
+  background: rgba(136, 30, 30, 0.24);
+  color: #ffe0e0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 0.86rem;
+}
+
+.infoGrid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.infoCard {
+  border-radius: 12px;
+  border: 1px solid rgba(245, 237, 220, 0.25);
+  background: rgba(8, 26, 29, 0.74);
+  padding: 12px;
+}
+
+.infoCard h3 {
+  margin: 0 0 10px;
+  color: #f0eadf;
+  font-size: 0.96rem;
+}
+
+.infoCard p {
+  margin: 0 0 6px;
+  color: #e8e0cf;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.muted {
+  color: #c7bda8;
+}
+
+.memberList {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.memberList li {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  border: 1px solid rgba(245, 237, 220, 0.18);
+  border-radius: 8px;
+  padding: 8px;
+  color: #f0eadf;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 980px) {
+  .section {
+    padding: 114px 16px 56px;
+  }
+
+  .card {
+    padding: 18px;
+  }
+
+  .formRow {
+    flex-direction: column;
+  }
+
+  .loadBtn {
+    width: 100%;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .memberList li {
+    grid-template-columns: 1fr;
+  }
+}

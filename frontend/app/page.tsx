@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import Navbar, { type MenuView } from "@/components/Navbar";
 import JoinSession from "@/components/Dashboard";
 import FindMyCircle from "@/components/CircleScience";
+import ViewMyCircle from "../components/ViewMyCircle";
+import JournalPanel from "../components/JournalPanel";
 import ViewPreviousSessions from "@/components/MemoryWall";
-import ImmediateHelp from "@/components/ImmediateHelp";
+import Memories from "@/components/Memories";
 import HomeImage from "@/components/HomeImage";
 import styles from "./page.module.css";
 
@@ -21,12 +23,20 @@ export default function Home() {
       return <JoinSession />;
     }
 
+    if (activeView === "viewMyCircle") {
+      return <ViewMyCircle />;
+    }
+
+    if (activeView === "journal") {
+      return <JournalPanel />;
+    }
+
     if (activeView === "viewPreviousSessions") {
       return <ViewPreviousSessions />;
     }
 
-    if (activeView === "immediateHelp") {
-      return <ImmediateHelp />;
+    if (activeView === "memories") {
+      return <Memories />;
     }
 
     return <FindMyCircle />;
