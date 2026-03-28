@@ -1,0 +1,71 @@
+.section { position: relative; padding: 120px 32px; overflow: hidden; }
+.bg {
+  position: absolute; inset: 0;
+  background:
+    url('https://images.unsplash.com/photo-1448375240586-882707db888b?w=1400&q=80') center center / cover no-repeat;
+  opacity: 0.15;
+}
+.bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, var(--night) 0%, rgba(13,26,16,0.85) 50%, var(--night) 100%);
+}
+.container { max-width: 1100px; margin: 0 auto; position: relative; z-index: 2; }
+.header { text-align: center; margin-bottom: 72px; }
+.label { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--hope-green); margin-bottom: 16px; padding: 6px 16px; border: 1px solid rgba(74,222,128,0.2); border-radius: 100px; }
+.title { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; color: var(--stone-light); margin-bottom: 16px; }
+.sub { font-size: 1rem; color: var(--moss-light); max-width: 500px; margin: 0 auto; line-height: 1.7; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; margin-bottom: 80px; }
+
+/* Circle viz */
+.vizWrap { position: relative; width: 340px; height: 340px; margin: 0 auto; }
+.circleCenter { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; z-index: 10; }
+.centerLabel { font-family: var(--font-display); font-size: 1.3rem; color: var(--stone-light); }
+.centerSub { font-size: 0.72rem; color: var(--moss-light); margin-top: 4px; }
+.orb {
+  position: absolute; top: 50%; left: 50%; width: 65px; height: 65px;
+  transform: translate(-50%,-50%) rotate(var(--angle)) translateY(-120px) rotate(calc(-1 * var(--angle)));
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  animation: fadeIn 0.6s ease-out var(--delay) both;
+}
+.orbBall {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.25), var(--color) 60%);
+  box-shadow: 0 0 28px var(--glow), inset 0 -3px 6px rgba(0,0,0,0.2);
+  animation: breathe 4s ease-in-out infinite;
+  animation-delay: var(--delay);
+}
+.orbLabel { font-size: 0.68rem; color: rgba(232,220,196,0.5); white-space: nowrap; }
+.facilBadge {
+  position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+  display: flex; align-items: center; gap: 8px; padding: 7px 16px;
+  background: rgba(20,31,22,0.8); border: 1px solid var(--glass-border);
+  border-radius: 100px; font-size: 0.7rem; color: rgba(232,220,196,0.5); white-space: nowrap;
+  backdrop-filter: blur(8px);
+}
+
+/* Stage cards */
+.cards { display: flex; flex-direction: column; gap: 14px; }
+.card {
+  display: flex; align-items: center; gap: 16px; padding: 18px 20px;
+  background: rgba(20,31,22,0.7); border: 1px solid var(--glass-border);
+  border-radius: 14px; backdrop-filter: blur(8px); transition: all 0.3s;
+}
+.card:hover { border-color: rgba(217,200,169,0.25); }
+.dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+.cardTitle { font-size: 0.88rem; font-weight: 600; color: var(--stone-light); margin-bottom: 3px; }
+.cardDesc { font-size: 0.78rem; color: var(--moss-light); line-height: 1.5; }
+.cardCount { font-family: var(--font-display); font-size: 1.4rem; color: var(--forest-mid); margin-left: auto; flex-shrink: 0; }
+
+/* Match */
+.matchSection { text-align: center; }
+.matchTitle { font-family: var(--font-display); font-size: 1.4rem; color: var(--stone); margin-bottom: 24px; }
+.pills { display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+.pill { padding: 8px 20px; background: rgba(217,200,169,0.08); border: 1px solid var(--glass-border); border-radius: 100px; font-size: 0.82rem; color: var(--stone); transition: all 0.3s; }
+.pill:hover { background: rgba(217,200,169,0.15); border-color: var(--stone-dark); }
+.matchNote { font-size: 0.85rem; color: var(--moss-light); font-style: italic; }
+
+@media (max-width: 900px) {
+  .grid { grid-template-columns: 1fr; gap: 48px; }
+  .vizWrap { width: 280px; height: 280px; }
+  .orb { transform: translate(-50%,-50%) rotate(var(--angle)) translateY(-95px) rotate(calc(-1 * var(--angle))); }
+}

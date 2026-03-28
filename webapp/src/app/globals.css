@@ -1,0 +1,74 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300;1,9..40,400&display=swap');
+
+:root {
+  --forest-deep: #1a2b1e;
+  --forest: #2C3E2F;
+  --forest-mid: #3a5240;
+  --forest-light: #4a6650;
+  --moss: #5a7a5e;
+  --moss-light: #7a9a7e;
+  --stone: #D9C8A9;
+  --stone-light: #E8DCC4;
+  --stone-lighter: #F2EAD8;
+  --stone-dark: #C4B08A;
+  --stone-warm: #BFA87A;
+  --sand: #F5F0E6;
+  --cream: #FAF7F0;
+  --night: #0d1a10;
+  --night-mid: #141f16;
+  --hope-green: #4ADE80;
+  --hope-glow: #22c55e;
+  --amber-warm: #D4A574;
+  --amber-glow: #E8B87A;
+  --teal-calm: #5EACB0;
+  --red-alert: #EF4444;
+  --glass-dark: rgba(20, 31, 22, 0.75);
+  --glass-light: rgba(217, 200, 169, 0.1);
+  --glass-stone: rgba(217, 200, 169, 0.15);
+  --glass-border: rgba(217, 200, 169, 0.15);
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+  --nav-height: 72px;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--night);
+  color: var(--stone-light);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--night); }
+::-webkit-scrollbar-thumb { background: var(--forest-mid); border-radius: 3px; }
+::selection { background: rgba(74, 222, 128, 0.2); color: var(--stone-light); }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(74, 222, 128, 0.2); }
+  50% { box-shadow: 0 0 40px rgba(74, 222, 128, 0.4); }
+}
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 1; }
+}
+@keyframes waveform {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}

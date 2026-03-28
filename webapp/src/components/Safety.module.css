@@ -1,0 +1,24 @@
+.section { padding: 120px 32px; background: radial-gradient(ellipse 60% 40% at 50% 60%, rgba(44,62,47,0.25) 0%, transparent 70%), var(--night-mid); }
+.container { max-width: 1000px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 64px; }
+.label { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: var(--hope-green); margin-bottom: 16px; padding: 6px 16px; border: 1px solid rgba(74,222,128,0.2); border-radius: 100px; }
+.title { font-family: var(--font-display); font-size: 2.4rem; font-weight: 400; color: var(--stone-light); }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.card {
+  padding: 36px 28px; background: rgba(20,31,22,0.65);
+  border: 1px solid var(--glass-border); border-radius: 20px;
+  backdrop-filter: blur(10px); position: relative; transition: all 0.3s;
+}
+.card:hover { border-color: rgba(74,222,128,0.2); transform: translateY(-4px); }
+.marker {
+  position: absolute; top: 16px; right: 16px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(217,200,169,0.08); border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-size: 0.85rem; font-weight: 600; color: var(--stone);
+}
+.cardIcon { color: var(--hope-green); margin-bottom: 20px; opacity: 0.75; }
+.cardTitle { font-family: var(--font-display); font-size: 1.3rem; font-weight: 500; color: var(--stone-light); margin-bottom: 12px; }
+.cardDesc { font-size: 0.86rem; color: var(--moss-light); line-height: 1.7; }
+
+@media (max-width: 768px) { .grid { grid-template-columns: 1fr; } }
