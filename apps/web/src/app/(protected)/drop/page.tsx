@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BottomNav } from "@/components/bottom-nav";
+import { dropBurden } from "../actions";
 
 type Phase = "write" | "pause" | "reveal";
 
@@ -11,25 +12,30 @@ export default function BurdenDropPage() {
   const [count, setCount] = useState(0);
   const [theme, setTheme] = useState("");
 
-  function handleDrop() {
+  const [peerQuote, setPeerQuote] = useState<string | null>(null);
+
+  async function handleDrop() {
     if (!text.trim()) return;
     setPhase("pause");
 
-    // Simulate AI extraction + count lookup
-    // In production: POST /burden/drop → AI theme extraction → count
-    setTimeout(() => {
-      const themes = [
-        { theme: "Career pressure", count: 312 },
-        { theme: "Family weight", count: 247 },
-        { theme: "The invisible debt", count: 183 },
-        { theme: "Belonging nowhere fully", count: 156 },
-        { theme: "Silent burnout", count: 201 },
-      ];
-      const selected = themes[Math.floor(Math.random() * themes.length)];
-      setTheme(selected.theme);
-      setCount(selected.count);
-      setPhase("reveal");
-    }, 2500); // 2.5s deliberate pause — this is not a loading spinner, it's a held breath
+    const fd = new FormData();
+    fd.set("text", text);
+
+    // Real DB save + deliberate 2s minimum pause (held breath, not a spinner)
+    const [res] = await Promise.all([
+      dropBurden(fd),
+      new Promise((r) => setTimeout(r, 2000)),
+    ]);
+
+    if (res.error) {
+      setTheme("Something you're carrying");
+      setCount(1);
+    } else {
+      setTheme(res.theme || "Something you're carrying");
+      setCount(res.count || 1);
+      setPeerQuote(res.relatedQuote || null);
+    }
+    setPhase("reveal");
   }
 
   return (

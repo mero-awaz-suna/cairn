@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { incrementHelped } from "../actions";
 
 interface Memory {
   id: string;
@@ -59,7 +60,8 @@ export function EchoesClient({ memories }: { memories: Memory[] }) {
   function handleHelped(id: string) {
     if (helped.has(id)) return;
     setHelped((prev) => new Set(prev).add(id));
-    // Fire-and-forget — no loading state
+    // Fire-and-forget — no loading state, no await
+    incrementHelped(id);
   }
 
   return (

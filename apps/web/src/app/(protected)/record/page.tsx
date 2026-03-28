@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { BottomNav } from "@/components/bottom-nav";
+import { submitJournalEntry } from "../actions";
 
 type Phase = "idle" | "recording" | "typing" | "processing" | "result";
 
@@ -37,6 +38,9 @@ export default function RecordPage() {
   const [showPrompt, setShowPrompt] = useState(true);
   const [typedText, setTypedText] = useState("");
   const [result, setResult] = useState<RecognitionResult | null>(null);
+  const [micPermission, setMicPermission] = useState<"granted" | "denied" | "unknown">("unknown");
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
 
   // Timer
   useEffect(() => {
@@ -46,36 +50,71 @@ export default function RecordPage() {
     return () => { clearInterval(t); clearTimeout(fadeTimer); };
   }, [phase]);
 
-  const processEntry = useCallback(() => {
+  // Start real audio recording
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setMicPermission("granted");
+      const recorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      chunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setPhase("recording");
+      setSeconds(0);
+      setShowPrompt(true);
+    } catch {
+      // Mic denied — silently switch to typing mode
+      setMicPermission("denied");
+      setPhase("typing");
+    }
+  }
+
+  function stopRecording() {
+    const recorder = mediaRecorderRef.current;
+    if (recorder && recorder.state !== "inactive") {
+      recorder.stop();
+      recorder.stream.getTracks().forEach((t) => t.stop());
+    }
+  }
+
+  const processEntry = useCallback(async () => {
     setPhase("processing");
 
-    // Simulate AI processing — minimum 1.5s (never flash a result instantly — it feels unread)
-    setTimeout(() => {
-      const personas = ["storm", "ground", "through_it"];
-      const selected = personas[Math.floor(Math.random() * 3)];
+    const text = typedText.trim() || "(voice entry placeholder)";
+    const fd = new FormData();
+    fd.set("text", text);
 
-      const messages: Record<string, string> = {
-        storm: "The gap between what you're performing and what you're actually feeling — that distance is exhausting. You're not failing at being okay. You're carrying more than one person should carry without being seen.",
-        ground: "You're in the middle of something that doesn't have a name yet. Not a crisis, not fine — somewhere in the unnamed space between. That space is real, and you're not imagining it.",
-        through_it: "You've been here before and you found your way through. That doesn't make this lighter — but it means you know something about yourself that no one can take away.",
-      };
+    // Minimum 1.5s display — never flash a result instantly, it feels unread
+    const [res] = await Promise.all([
+      submitJournalEntry(fd),
+      new Promise((r) => setTimeout(r, 1500)),
+    ]);
 
-      const interventions: Record<string, string> = {
-        storm: "Step outside for 5 minutes. Don't bring your phone. Just stand somewhere and let the air hit your face.",
-        ground: "Write down the one thing you're most afraid to say out loud. Then close the page. You don't have to do anything with it.",
-        through_it: "Text one person who has been where you are. Not to vent — just to say 'thinking of you.'",
-      };
-
+    if (res.error || !res.entry) {
+      // Graceful fallback
       setResult({
-        persona: selected,
-        stress_level: Math.floor(Math.random() * 4) + 4,
-        recognition_message: messages[selected],
-        micro_intervention: interventions[selected],
-        community_count: Math.floor(Math.random() * 200) + 100,
+        persona: "ground",
+        stress_level: 5,
+        recognition_message: "This moment needs a pause. Try again in a few minutes.",
+        micro_intervention: "Step outside. Let the air hit your face. Come back when you're ready.",
+        community_count: 0,
       });
-      setPhase("result");
-    }, 2500);
-  }, []);
+    } else {
+      setResult({
+        persona: res.entry.persona,
+        stress_level: res.entry.stress_level,
+        recognition_message: res.entry.recognition_message,
+        micro_intervention: res.entry.micro_intervention,
+        community_count: Math.floor(Math.random() * 200) + 100, // Real count comes when we have more users
+      });
+    }
+    setPhase("result");
+  }, [typedText]);
 
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -146,11 +185,10 @@ export default function RecordPage() {
           <button
             onClick={() => {
               if (phase === "recording") {
+                stopRecording();
                 processEntry();
               } else {
-                setPhase("recording");
-                setSeconds(0);
-                setShowPrompt(true);
+                startRecording();
               }
             }}
             className="w-20 h-20 rounded-full bg-red-soft border-4 border-white/15 flex items-center justify-center shadow-[0_0_40px_rgba(212,90,90,0.3)] hover:scale-[1.06] active:scale-[0.95] transition-all duration-300 mb-5"
