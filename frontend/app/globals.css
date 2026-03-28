@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #b9d1b9;
+  --foreground: #65c793;
+  --mist: #74c187;
+  --stone: #f5eddc;
+  --moss: #93e08c;
+  --deep-lake: #0d2425;
 }
 
 @theme inline {
@@ -14,13 +18,193 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #c4e9cd;
+    --foreground: #102526;
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), "Segoe UI", "Trebuchet MS", sans-serif;
+}
+
+.auth-screen {
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
+    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
+    linear-gradient(160deg, #e2fc93 0%, #6ca77b 46%, #338760 100%);
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 23rem;
+  border-radius: 1.35rem;
+  padding: 1rem;
+  background: linear-gradient(165deg, rgba(11, 38, 41, 0.94) 0%, rgba(8, 26, 29, 0.96) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 20px 45px rgba(4, 18, 19, 0.45);
+}
+
+.auth-glass {
+  border-radius: 1rem;
+  padding: 0.9rem;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(245, 237, 220, 0.22);
+  backdrop-filter: blur(8px);
+}
+
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  font-size: 0.79rem;
+  letter-spacing: 0.01em;
+  color: #112d2f;
+  background: linear-gradient(90deg, #d7f3c6 0%, #a7dca2 100%);
+}
+
+.auth-heading {
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 650;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: #f8f6f0;
+}
+
+.auth-subtext {
+  margin-top: 0.45rem;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: rgba(245, 237, 220, 0.84);
+}
+
+.auth-field {
+  margin-top: 0.8rem;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 0.37rem;
+  font-size: 0.82rem;
+  color: rgba(245, 237, 220, 0.86);
+}
+
+.auth-input {
+  width: 100%;
+  border: 1px solid rgba(245, 237, 220, 0.24);
+  border-radius: 0.78rem;
+  padding: 0.73rem 0.82rem;
+  font-size: 0.95rem;
+  color: #f8f6f0;
+  background: rgba(4, 20, 21, 0.44);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.auth-input::placeholder {
+  color: rgba(245, 237, 220, 0.48);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: rgba(167, 220, 162, 0.88);
+  background: rgba(4, 20, 21, 0.66);
+  box-shadow: 0 0 0 3px rgba(167, 220, 162, 0.22);
+}
+
+.auth-meta-row {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+  font-size: 0.79rem;
+  color: rgba(245, 237, 220, 0.84);
+}
+
+.auth-link {
+  color: #b9efb3;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.auth-link:hover,
+.auth-link:focus-visible {
+  color: #d7f3c6;
+  border-color: rgba(215, 243, 198, 0.75);
+}
+
+.auth-submit {
+  margin-top: 1rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0.82rem;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.95rem;
+  font-weight: 620;
+  color: #102526;
+  background: linear-gradient(95deg, #ddf8ca 0%, #a7dca2 45%, #8fc68b 100%);
+  box-shadow: 0 7px 22px rgba(129, 184, 122, 0.35);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.auth-submit:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+  box-shadow: 0 10px 26px rgba(129, 184, 122, 0.44);
+}
+
+.auth-footnote {
+  margin-top: 0.95rem;
+  font-size: 0.79rem;
+  text-align: center;
+  color: rgba(245, 237, 220, 0.78);
+}
+
+.auth-stone-row {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.62rem;
+}
+
+.auth-stone {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #dce5d3 0%, #9fb3ab 100%);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.25);
+}
+
+@media (min-width: 640px) {
+  .auth-screen {
+    padding: 1.35rem;
+  }
+
+  .auth-shell {
+    max-width: 28rem;
+    padding: 1.2rem;
+  }
+
+  .auth-glass {
+    padding: 1.15rem;
+  }
+
+  .auth-meta-row {
+    font-size: 0.82rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-shell {
+    max-width: 31rem;
+  }
 }

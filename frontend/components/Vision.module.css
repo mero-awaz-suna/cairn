@@ -1,0 +1,35 @@
+.section { position: relative; padding: 160px 32px; text-align: center; overflow: hidden; }
+.bg {
+  position: absolute; inset: 0;
+  background: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1400&q=80') center center / cover no-repeat;
+  opacity: 0.2;
+}
+.overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, var(--night) 0%, rgba(13,26,16,0.8) 50%, var(--night) 100%);
+}
+.content { position: relative; z-index: 2; max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; }
+.title { font-family: var(--font-display); font-size: 2.4rem; font-weight: 400; color: var(--stone-light); line-height: 1.35; margin: 32px 0 24px; }
+.sub { font-size: 1.05rem; color: var(--moss-light); line-height: 1.7; margin-bottom: 16px; }
+.audience { font-size: 0.88rem; color: rgba(232,220,196,0.4); font-style: italic; margin-bottom: 40px; }
+.cta {
+  background: var(--stone); color: var(--night); border: none;
+  padding: 18px 48px; border-radius: 6px;
+  font-family: var(--font-body); font-size: 1rem; font-weight: 600;
+  cursor: pointer; transition: all 0.3s;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+}
+.cta:hover { background: var(--stone-light); transform: translateY(-2px); box-shadow: 0 8px 40px rgba(217,200,169,0.25); }
+
+/* Footer */
+.footer { padding: 48px 32px; background: var(--night); border-top: 1px solid var(--glass-border); text-align: center; }
+.footerInner { max-width: 1100px; margin: 0 auto; }
+.footerBrand { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.footerName { font-family: var(--font-display); font-size: 1.2rem; color: var(--stone); }
+.footerTag { font-size: 0.8rem; color: var(--forest-mid); margin-bottom: 24px; font-style: italic; }
+.footerLinks { display: flex; justify-content: center; gap: 32px; margin-bottom: 24px; }
+.footerLinks a { color: rgba(232,220,196,0.4); text-decoration: none; font-size: 0.8rem; transition: color 0.3s; }
+.footerLinks a:hover { color: var(--stone-light); }
+.footerCopy { font-size: 0.7rem; color: var(--forest-mid); }
+
+@media (max-width: 768px) { .title { font-size: 1.8rem; } }

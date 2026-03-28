@@ -1,0 +1,80 @@
+.section { padding: 120px 32px; background: linear-gradient(180deg, var(--night) 0%, var(--forest-deep) 100%); }
+.container { max-width: 1000px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 56px; }
+.label { font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.15em; color: rgba(232,220,196,0.4); margin-bottom: 16px; display: block; }
+.title { font-family: var(--font-display); font-size: 2.4rem; font-weight: 400; color: var(--stone-light); }
+
+/* Frame with mountain background */
+.frame {
+  position: relative; border-radius: 24px; overflow: hidden;
+  border: 1px solid var(--glass-border); padding: 24px;
+}
+.frameBg {
+  position: absolute; inset: 0; z-index: 0;
+  background: url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=1200&q=80') center 40% / cover no-repeat;
+}
+.frameOverlay {
+  position: absolute; inset: 0; z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(13,26,16,0.7) 0%, rgba(44,62,47,0.6) 40%, rgba(13,26,16,0.92) 100%);
+}
+
+.dashNav {
+  position: relative; z-index: 5;
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 36px;
+}
+.dashBrand { display: flex; align-items: center; gap: 8px; font-family: var(--font-display); font-size: 1.1rem; color: var(--stone-light); }
+.dashRight { display: flex; align-items: center; gap: 12px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--stone-dark), var(--stone)); }
+.dashHelp {
+  display: flex; align-items: center; gap: 5px;
+  background: var(--hope-green); color: var(--night); border: none;
+  padding: 8px 16px; border-radius: 100px;
+  font-family: var(--font-body); font-size: 0.78rem; font-weight: 600; cursor: pointer;
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* Persona */
+.persona { position: relative; z-index: 5; text-align: center; padding: 24px 0 32px; }
+.personaTitle { font-family: var(--font-display); font-size: 2.2rem; font-weight: 500; color: var(--stone-light); margin-bottom: 6px; }
+.personaSub { font-size: 0.88rem; color: var(--moss-light); margin-bottom: 28px; }
+.stones { display: flex; justify-content: center; gap: 16px; margin-bottom: 28px; }
+.slider { max-width: 380px; margin: 0 auto; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px; position: relative; }
+.sliderFill { width: 52%; height: 100%; background: linear-gradient(90deg, var(--forest-mid), var(--stone-dark)); border-radius: 2px; }
+.sliderDot { position: absolute; top: 50%; left: 52%; transform: translate(-50%,-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--stone-light); border: 3px solid var(--night); box-shadow: 0 0 10px rgba(217,200,169,0.3); }
+
+/* Widgets */
+.widgets { position: relative; z-index: 5; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.widget {
+  background: var(--stone-lighter); border-radius: 16px; padding: 22px;
+  color: var(--night); position: relative; overflow: hidden;
+}
+.widgetLabel {
+  font-size: 0.78rem; font-weight: 500; color: var(--forest);
+  margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;
+}
+.widgetBig { font-family: var(--font-display); font-size: 2.8rem; font-weight: 300; color: var(--night); line-height: 1; }
+.widgetUnit { font-size: 0.95rem; font-weight: 400; margin-left: 4px; color: var(--forest); }
+.mountainArt { margin-top: 8px; opacity: 0.6; }
+.mountainArt svg { width: 100%; height: 40px; }
+.playIcon {
+  position: absolute; top: 18px; right: 18px;
+  width: 32px; height: 32px; border-radius: 50%; background: var(--forest);
+  color: var(--stone-light); display: flex; align-items: center; justify-content: center;
+}
+.dots { display: flex; gap: 6px; align-items: center; margin-top: 14px; }
+.dot {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--moss), var(--forest-mid)); opacity: 0.7;
+}
+.dot:nth-child(odd) { background: linear-gradient(135deg, var(--stone-dark), var(--moss)); }
+.dotMore {
+  width: 26px; height: 26px; border-radius: 50%;
+  background: rgba(44,62,47,0.15); display: flex; align-items: center; justify-content: center; color: var(--forest);
+}
+
+@media (max-width: 768px) {
+  .widgets { grid-template-columns: 1fr; }
+  .personaTitle { font-size: 1.6rem; }
+  .stones { gap: 10px; }
+}

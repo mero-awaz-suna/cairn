@@ -1,0 +1,75 @@
+.section {
+  position: relative; padding: 120px 32px;
+  background: linear-gradient(180deg, var(--night) 0%, var(--forest-deep) 50%, var(--night) 100%);
+}
+.container { max-width: 1100px; margin: 0 auto; }
+.header { text-align: center; margin-bottom: 80px; }
+.label {
+  display: inline-block; font-size: 0.75rem; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.15em; color: var(--hope-green);
+  margin-bottom: 16px; padding: 6px 16px;
+  border: 1px solid rgba(74, 222, 128, 0.2); border-radius: 100px;
+}
+.title { font-family: var(--font-display); font-size: 2.6rem; font-weight: 400; color: var(--stone-light); }
+.steps { display: flex; flex-direction: column; gap: 48px; }
+.step {
+  display: grid; grid-template-columns: 56px 1fr 300px; gap: 32px;
+  align-items: start; opacity: 0; animation: fadeInUp 0.6s ease-out forwards;
+}
+.stepNum { font-family: var(--font-display); font-size: 2rem; font-weight: 300; color: var(--forest-mid); }
+.stepTitle { font-family: var(--font-display); font-size: 1.5rem; font-weight: 500; color: var(--stone-light); margin-bottom: 12px; }
+.stepDesc { font-size: 0.92rem; color: var(--moss-light); line-height: 1.7; max-width: 420px; }
+
+/* Glass cards */
+.card {
+  background: rgba(20, 31, 22, 0.8); border: 1px solid var(--glass-border);
+  border-radius: 16px; padding: 24px; backdrop-filter: blur(16px);
+}
+.cardRow {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 20px; font-size: 0.85rem; color: rgba(232,220,196,0.5);
+}
+.bigNum { font-family: var(--font-display); font-size: 2rem; color: var(--stone-light); font-weight: 300; }
+.bigNum sup { font-size: 0.9rem; opacity: 0.5; }
+.cardLabel { font-size: 0.8rem; color: rgba(232,220,196,0.5); text-align: center; margin-bottom: 16px; letter-spacing: 0.03em; }
+
+/* Waveform */
+.waveform { display: flex; align-items: center; gap: 3px; height: 56px; margin-bottom: 20px; }
+.waveBar {
+  flex: 1; background: linear-gradient(0deg, var(--forest-mid), var(--moss-light));
+  border-radius: 2px; min-height: 4px; animation: waveform 1.5s ease-in-out infinite alternate; opacity: 0.6;
+}
+.micBtn {
+  width: 40px; height: 40px; border-radius: 50%; background: white;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto;
+  box-shadow: 0 2px 16px rgba(255,255,255,0.1);
+}
+
+/* Persona */
+.personaStage { font-family: var(--font-display); font-size: 1.2rem; color: var(--stone-light); margin-bottom: 20px; text-align: center; }
+.barRow { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.barLabel { font-size: 0.72rem; color: rgba(232,220,196,0.4); white-space: nowrap; }
+.barTrack { flex: 1; height: 5px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; }
+.barFill { height: 100%; background: linear-gradient(90deg, var(--forest-mid), var(--hope-green)); border-radius: 3px; }
+.barVal { font-size: 0.82rem; color: var(--hope-green); font-weight: 600; }
+.tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.tag {
+  font-size: 0.68rem; padding: 4px 12px; border-radius: 100px;
+  background: rgba(217,200,169,0.08); color: rgba(232,220,196,0.5); border: 1px solid var(--glass-border);
+}
+
+/* Circle */
+.memberList { display: flex; flex-direction: column; gap: 8px; }
+.member { display: flex; align-items: center; gap: 12px; padding: 7px 12px; background: rgba(255,255,255,0.02); border-radius: 8px; font-size: 0.8rem; color: rgba(232,220,196,0.5); }
+.memberDot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+/* Summary */
+.sumList { display: flex; flex-direction: column; gap: 10px; }
+.sumItem { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: var(--stone); padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.check { color: var(--hope-green); }
+
+@media (max-width: 900px) {
+  .step { grid-template-columns: 1fr; gap: 20px; }
+  .stepNum { font-size: 1.4rem; }
+  .title { font-size: 1.8rem; }
+}
