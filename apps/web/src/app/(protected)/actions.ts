@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { processJournalEntry } from "@/lib/ai/persona-engine";
 import { resolveProvider, hasAnyKey } from "@/lib/ai/llm";
+import { transcribeAudio } from "@/lib/ai/transcribe";
 
 // ── Sign Out ──
 export async function signOut() {
@@ -28,9 +29,26 @@ async function getProfileId() {
   return profile?.id || null;
 }
 
-// ── Submit Journal Entry (text-based, no AI yet) ──
+// ── Submit Journal Entry (text or audio) ──
 export async function submitJournalEntry(formData: FormData) {
-  const text = formData.get("text") as string;
+  let text = (formData.get("text") as string) || "";
+  const audioFile = formData.get("audio") as File | null;
+  const audioMimeType = (formData.get("mimeType") as string) || "";
+  const inputType = audioFile ? "audio" : "text";
+  let transcriptionMs: number | null = null;
+
+  // If audio, transcribe first via Groq Whisper
+  if (audioFile && audioFile.size > 0) {
+    try {
+      const result = await transcribeAudio(audioFile, audioMimeType);
+      text = result.text;
+      transcriptionMs = result.durationMs;
+    } catch (err) {
+      console.error("[Journal] Transcription failed:", err);
+      return { error: "Transcription failed. Try typing instead." };
+    }
+  }
+
   if (!text?.trim()) return { error: "No text provided" };
 
   const supabase = await createClient();
@@ -67,7 +85,7 @@ export async function submitJournalEntry(formData: FormData) {
     .from("journal_entries")
     .insert({
       user_id: profileId,
-      input_type: "text",
+      input_type: inputType,
       raw_transcript: text,
       assigned_persona: persona,
       persona_confidence: aiResult.persona_confidence,
@@ -77,6 +95,7 @@ export async function submitJournalEntry(formData: FormData) {
       micro_intervention: microIntervention,
       ai_model_used: aiModelUsed,
       ai_processing_ms: Date.now() - startTime,
+      transcription_ms: transcriptionMs,
     })
     .select()
     .single();
