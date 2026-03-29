@@ -1,5 +1,0 @@
-[phases.setup]
-nixPkgs = ["python312", "gcc"]
-
-[start]
-cmd = "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
