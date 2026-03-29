@@ -342,5 +342,3 @@ The frontend is a standard Next.js app. Deploy to Vercel with zero configuration
 The HDBSCAN clustering job (`backend/db/cluster_job.py`) should run periodically — every few hours is sufficient. Use a pg_cron job in Supabase, a Supabase Edge Function cron trigger, or a scheduled task on your deployment platform.
 
 ---
-
-*Built at [Hackathon name] · [Date] · Team: [Your names]*
