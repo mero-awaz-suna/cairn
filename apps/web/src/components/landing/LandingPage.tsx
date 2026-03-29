@@ -171,8 +171,14 @@ function Hero() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#0D1A10]/70 via-[#1a2e1d]/45 via-[55%] to-[#0D1A10]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_35%,transparent_0%,rgba(13,26,16,0.6)_100%)]" />
 
-      {/* Subtle grain texture */}
-      <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 256 256\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noise\"%3E%3CfeTurbulence baseFrequency=\"0.9\" numOctaves=\"4\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noise)\" opacity=\"0.5\"/%3E%3C/svg%3E')" }} />
+      {/* Film grain texture */}
+      <div
+        className="absolute inset-0 opacity-[0.045] pointer-events-none mix-blend-overlay"
+        style={{
+          backgroundImage: "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 512 512\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"n\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.75\" numOctaves=\"4\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23n)\"/%3E%3C/svg%3E')",
+          backgroundSize: "200px 200px",
+        }}
+      />
 
       {/* Ambient glow dots */}
       <GlowDot className="top-[20%] left-[15%]" />
@@ -292,22 +298,22 @@ function Hero() {
         </div>
       </motion.div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator — hidden on small screens */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 1 }}
-        className="absolute bottom-[120px] md:bottom-[130px] left-1/2 -translate-x-1/2 z-10"
+        transition={{ delay: 2.2, duration: 1 }}
+        className="hidden md:flex absolute bottom-[100px] left-1/2 -translate-x-1/2 z-10 flex-col items-center gap-2"
       >
         <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-          className="w-[22px] h-[34px] rounded-full border border-[#F2EAD8]/20 flex justify-center pt-2"
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          className="w-[20px] h-[32px] rounded-full border border-[#F2EAD8]/15 flex justify-center pt-[7px]"
         >
           <motion.div
-            animate={{ opacity: [0.6, 1, 0.6], y: [0, 6, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="w-[3px] h-[7px] rounded-full bg-[#F2EAD8]/50"
+            animate={{ opacity: [0.4, 0.9, 0.4], y: [0, 7, 0] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+            className="w-[2.5px] h-[6px] rounded-full bg-[#F2EAD8]/40"
           />
         </motion.div>
       </motion.div>
