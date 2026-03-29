@@ -1,8 +1,9 @@
 [phases.setup]
-nixPkgs = ["python313", "gcc"]
+nixPkgs = ["python312", "gcc"]
+onlyIncludeFiles = ["requirements.txt", "*.py", "**/*.py", "**/*.wav"]
 
 [phases.install]
-cmds = ["pip install -r requirements.txt"]
+cmds = ["python -m venv --copies /opt/venv && . /opt/venv/bin/activate && pip install -r requirements.txt"]
 
 [start]
-cmd = "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
+cmd = ". /opt/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"
