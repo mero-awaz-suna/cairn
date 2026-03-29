@@ -3,9 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { processJournalEntry } from "@/lib/ai/persona-engine";
-import { resolveProvider, hasAnyKey } from "@/lib/ai/llm";
-import { transcribeAudio } from "@/lib/ai/transcribe";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ── Sign Out ──
 export async function signOut() {
@@ -29,6 +28,13 @@ async function getProfileId() {
   return profile?.id || null;
 }
 
+// ── Get Supabase access token for backend API calls ──
+async function getAccessToken(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token || null;
+}
+
 // ── Submit Journal Entry (text or audio) ──
 export async function submitJournalEntry(formData: FormData) {
   let text = (formData.get("text") as string) || "";
@@ -36,51 +42,126 @@ export async function submitJournalEntry(formData: FormData) {
   const audioMimeType = (formData.get("mimeType") as string) || "";
   const inputType = audioFile ? "audio" : "text";
   let transcriptionMs: number | null = null;
-
-  // If audio, transcribe first via Groq Whisper
-  if (audioFile && audioFile.size > 0) {
-    try {
-      const result = await transcribeAudio(audioFile, audioMimeType);
-      text = result.text;
-      transcriptionMs = result.durationMs;
-    } catch (err) {
-      console.error("[Journal] Transcription failed:", err);
-      return { error: "Transcription failed. Try typing instead." };
-    }
-  }
-
-  if (!text?.trim()) return { error: "No text provided" };
+  let audioStoragePath: string | null = null;
 
   const supabase = await createClient();
   const profileId = await getProfileId();
   if (!profileId) return { error: "Not authenticated" };
 
-  // Get community count for the recognition message
-  const { count: communityCount } = await supabase
-    .from("users")
-    .select("*", { count: "exact", head: true })
-    .eq("is_suspended", false);
+  const token = await getAccessToken();
 
-  const startTime = Date.now();
+  // If audio, upload to Supabase Storage first, then transcribe
+  if (audioFile && audioFile.size > 0) {
+    try {
+      // Upload audio to Supabase Storage
+      const audioBytes = Buffer.from(await audioFile.arrayBuffer());
+      const storagePath = `${profileId}/${Date.now()}.webm`;
+      await supabase.storage
+        .from("journal-audio")
+        .upload(storagePath, audioBytes, { contentType: audioMimeType || "audio/webm" });
+      audioStoragePath = storagePath;
 
-  // Claude AI persona engine (falls back to heuristics if no API key)
-  const aiResult = await processJournalEntry(text, communityCount || 42);
+      // Transcribe via Groq Whisper (keep local for speed)
+      const { transcribeAudio } = await import("@/lib/ai/transcribe");
+      const result = await transcribeAudio(audioFile, audioMimeType);
+      text = result.text;
+      transcriptionMs = result.durationMs;
+    } catch (err) {
+      console.error("[Journal] Audio processing failed:", err);
+      return { error: "Audio processing failed. Try typing instead." };
+    }
+  }
 
-  const persona = aiResult.persona;
-  const stressLevel = aiResult.stress_level;
-  const recognitionMessage = aiResult.recognition_message;
-  const microIntervention = aiResult.micro_intervention;
-  const burdenThemes = aiResult.burden_themes;
-  const provider = hasAnyKey() ? resolveProvider() : "heuristic";
-  const modelMap: Record<string, string> = {
-    groq: "llama-3.3-70b-versatile",
-    gemini: "gemini-2.0-flash",
-    anthropic: "claude-sonnet-4-20250514",
-    heuristic: "heuristic-v1",
+  if (!text?.trim()) return { error: "No text provided" };
+
+  // ── Call FastAPI backend for persona analysis ──
+  let backendResult: {
+    stage: string;
+    stress_score: number;
+    stage_confidence: number;
+    stressor_breakdown: Record<string, number>;
+    crisis_flag: boolean;
+    crisis_reason: string | null;
+    is_improving: boolean;
+    entry_count: number;
+  } | null = null;
+
+  if (token) {
+    try {
+      // Get entry count for day_number
+      const { count } = await supabase
+        .from("journal_entries")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", profileId);
+
+      const res = await fetch(`${API_URL}/persona/submit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          transcript: text,
+          audio_path: audioStoragePath || "text-only",
+          day_number: (count || 0) + 1,
+        }),
+      });
+
+      if (res.ok) {
+        backendResult = await res.json();
+      }
+    } catch (err) {
+      console.warn("[Journal] Backend persona call failed, falling back to heuristics:", err);
+    }
+  }
+
+  // ── Map backend result to our schema (or fall back to heuristics) ──
+  const STAGE_MAP: Record<string, string> = {
+    "In the storm": "storm",
+    "Finding ground": "ground",
+    "Through it": "through_it",
   };
-  const aiModelUsed = modelMap[provider] || "heuristic-v1";
 
-  // Insert journal entry
+  let persona: string;
+  let stressLevel: number;
+  let personaConfidence: number;
+  let recognitionMessage: string;
+  let microIntervention: string;
+  let burdenThemes: string[];
+
+  if (backendResult) {
+    persona = STAGE_MAP[backendResult.stage] || "ground";
+    stressLevel = Math.round(backendResult.stress_score * 10);
+    personaConfidence = backendResult.stage_confidence;
+    burdenThemes = Object.entries(backendResult.stressor_breakdown)
+      .filter(([, v]) => v > 0.15)
+      .map(([k]) => k);
+    recognitionMessage = backendResult.crisis_flag
+      ? "We see you. This is heavy, and you don't have to carry it alone."
+      : backendResult.is_improving
+        ? "You're moving through this. That takes real strength."
+        : "Just showing up here takes courage. We see you.";
+    microIntervention = backendResult.crisis_flag
+      ? "Consider reaching out to someone you trust right now."
+      : "Take three slow breaths. You've already done something brave by being here.";
+  } else {
+    // Heuristic fallback (same as before)
+    const { processJournalEntry } = await import("@/lib/ai/persona-engine");
+    const { count: communityCount } = await supabase
+      .from("users")
+      .select("*", { count: "exact", head: true })
+      .eq("is_suspended", false);
+    const aiResult = await processJournalEntry(text, communityCount || 42);
+    persona = aiResult.persona;
+    stressLevel = aiResult.stress_level;
+    personaConfidence = aiResult.persona_confidence;
+    recognitionMessage = aiResult.recognition_message;
+    microIntervention = aiResult.micro_intervention;
+    burdenThemes = aiResult.burden_themes;
+  }
+
+  // ── Insert journal entry (frontend still owns this write) ──
+  const startTime = Date.now();
   const { data: entry, error } = await supabase
     .from("journal_entries")
     .insert({
@@ -88,12 +169,12 @@ export async function submitJournalEntry(formData: FormData) {
       input_type: inputType,
       raw_transcript: text,
       assigned_persona: persona,
-      persona_confidence: aiResult.persona_confidence,
+      persona_confidence: personaConfidence,
       stress_level: stressLevel,
       burden_themes: burdenThemes,
       recognition_message: recognitionMessage,
       micro_intervention: microIntervention,
-      ai_model_used: aiModelUsed,
+      ai_model_used: backendResult ? "gemini-persona-pipeline" : "heuristic-v1",
       ai_processing_ms: Date.now() - startTime,
       transcription_ms: transcriptionMs,
     })
@@ -118,7 +199,6 @@ export async function submitJournalEntry(formData: FormData) {
     const lastDate = new Date(lastEntry.created_at).toISOString().split("T")[0];
     const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
     if (lastDate === yesterday || lastDate === today) {
-      // Fetch current streak and increment
       const { data: profile } = await supabase
         .from("users")
         .select("journal_streak")
@@ -133,7 +213,7 @@ export async function submitJournalEntry(formData: FormData) {
     .from("users")
     .update({
       current_persona: persona,
-      persona_confidence: aiResult.persona_confidence,
+      persona_confidence: personaConfidence,
       current_stress_level: stressLevel,
       last_journal_at: new Date().toISOString(),
       journal_streak: newStreak,
@@ -216,7 +296,6 @@ export async function dropBurden(formData: FormData) {
   // Increment user's burden count (atomic)
   const { error: rpcError } = await supabase.rpc("increment_burdens_dropped", { profile_id: profileId });
   if (rpcError) {
-    // Fallback: manual increment
     const { data: u } = await supabase.from("users").select("burdens_dropped").eq("id", profileId).single();
     if (u) await supabase.from("users").update({ burdens_dropped: u.burdens_dropped + 1 }).eq("id", profileId);
   }
@@ -238,7 +317,6 @@ export async function dropBurden(formData: FormData) {
   revalidatePath("/home");
   revalidatePath("/profile");
 
-  // Get display label for theme
   const { data: taxonomy } = await supabase
     .from("burden_taxonomy")
     .select("display_label")
@@ -257,10 +335,8 @@ export async function dropBurden(formData: FormData) {
 export async function incrementHelped(memoryId: string) {
   const supabase = await createClient();
 
-  // Atomic increment via RPC
   const { error: rpcErr } = await supabase.rpc("increment_helped_count", { memory_id: memoryId });
   if (rpcErr) {
-    // Fallback: manual increment
     const { data } = await supabase.from("memories").select("helped_count").eq("id", memoryId).single();
     if (data) {
       await supabase.from("memories").update({ helped_count: data.helped_count + 1 }).eq("id", memoryId);

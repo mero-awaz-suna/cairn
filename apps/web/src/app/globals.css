@@ -48,6 +48,18 @@
   --moss-soft: rgba(107,143,113,0.08);
   --ember-glow: rgba(212,132,90,0.15);
   --stone-90: rgba(44,40,37,0.9);
+
+  /* ── Landing page tokens (used by Hero, HowItWorks, etc.) ── */
+  --stone: #F5EDDC;
+  --stone-light: #FBF6EE;
+  --night: #0D1A10;
+  --deep-lake: #0d2425;
+}
+
+/* Landing page animation */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* ── BASE STYLES ── */

@@ -1,0 +1,267 @@
+.section {
+  padding: 136px 24px 72px;
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
+    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
+    linear-gradient(300deg, #a5b86d 0%, #5d9a6d 46%, #398c65 100%);
+}
+
+.container {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.label {
+  display: none;
+}
+
+.title {
+  margin: 0 auto 14px;
+  width: min(860px, 100%);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.5rem);
+  line-height: 1.3;
+  color: var(--stone-light);
+}
+
+.sub {
+  margin: 0 auto;
+  width: min(760px, 100%);
+  color: #ece4d5;
+  font-size: 0.96rem;
+  line-height: 1.72;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.card,
+.timelineCard {
+  border-radius: 18px;
+  border: 1px solid rgba(245, 237, 220, 0.32);
+  background: rgba(11, 38, 41, 0.9);
+  padding: 18px;
+}
+
+.card h3,
+.timelineCard h3 {
+  margin: 0 0 12px;
+  color: var(--stone-light);
+  font-size: 1.05rem;
+}
+
+.snapshotList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.snapshotList li {
+  border-radius: 10px;
+  border: 1px solid rgba(245, 237, 220, 0.22);
+  background: rgba(8, 26, 29, 0.9);
+  padding: 10px;
+  display: grid;
+  gap: 4px;
+}
+
+.snapshotList span {
+  color: #bcd4bc;
+  font-size: 0.78rem;
+}
+
+.snapshotList strong {
+  color: #f0f4ea;
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.availabilityRow {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.value {
+  margin: 0;
+  color: #d8f3de;
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+}
+
+.caption {
+  margin: 2px 0 0;
+  color: #e4dac6;
+  font-size: 0.78rem;
+}
+
+.joinBtn {
+  border: 1px solid rgba(122, 154, 126, 0.6);
+  background: rgba(122, 154, 126, 0.2);
+  color: #e7f4e7;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.joinBtn:hover,
+.joinBtn:focus-visible {
+  background: rgba(122, 154, 126, 0.32);
+}
+
+.monitorList {
+  display: grid;
+  gap: 8px;
+}
+
+.monitorList p {
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 237, 220, 0.22);
+  background: rgba(8, 26, 29, 0.9);
+  padding: 9px 10px;
+  color: #ece4d5;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.guardrail {
+  margin-top: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 74, 74, 0.24);
+  background: rgba(255, 74, 74, 0.08);
+  padding: 10px;
+  color: #ffd3d3;
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.timelineHeader h3 {
+  margin: 0;
+}
+
+.timelineHeader span {
+  color: #bcd4bc;
+  font-size: 0.76rem;
+}
+
+.timelineList {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  gap: 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 237, 220, 0.22);
+  background: rgba(8, 26, 29, 0.9);
+  padding: 10px;
+}
+
+.time {
+  margin: 0;
+  color: #cfdfcd;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.timelineItem h4 {
+  margin: 0 0 4px;
+  color: #edf3e4;
+  font-size: 0.88rem;
+}
+
+.timelineItem p {
+  margin: 0;
+  color: #ece4d5;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.summaryBox {
+  border-radius: 12px;
+  border: 1px solid rgba(122, 154, 126, 0.45);
+  background: rgba(122, 154, 126, 0.14);
+  padding: 10px;
+}
+
+.summaryBox h4 {
+  margin: 0 0 5px;
+  color: #d7f0dd;
+  font-size: 0.88rem;
+}
+
+.summaryBox p {
+  margin: 0;
+  color: #eaf4ea;
+  font-size: 0.83rem;
+  line-height: 1.6;
+}
+
+.bottomAction {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.pageBtn {
+  border: 1px solid rgba(147, 224, 140, 0.45);
+  background: rgba(11, 38, 41, 0.88);
+  color: #ddf8ca;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+@media (max-width: 960px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .availabilityRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .joinBtn {
+    width: 100%;
+  }
+
+  .section {
+    padding: 114px 16px 56px;
+  }
+
+  .timelineItem {
+    grid-template-columns: 1fr;
+  }
+}
