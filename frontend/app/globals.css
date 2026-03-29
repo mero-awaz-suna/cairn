@@ -1,26 +1,26 @@
 @import "tailwindcss";
 
 :root {
-  --warm-cream: #f5f0ea;
+  --warm-cream: #f4eee6;
   --white: #ffffff;
-  --stone: #2c2825;
-  --dusk: #8b7e74;
-  --cloud: #c9bfb2;
-  --cloud-light: #d9d1c6;
-  --sand: #e8dfd3;
-  --sand-light: #f0eae0;
-  --moss: #6b8f71;
-  --moss-deep: #5a7d60;
-  --moss-light: #8fb996;
-  --ember: #d4845a;
+  --stone: #302822;
+  --dusk: #7d6f63;
+  --cloud: #c5b8aa;
+  --cloud-light: #d5cabd;
+  --sand: #e4d8c9;
+  --sand-light: #f1e8dc;
+  --moss: #6f8f6a;
+  --moss-deep: #5b7756;
+  --moss-light: #95b890;
+  --ember: #c97a56;
   --red-soft: #d45a5a;
 
-  --moss-glow: rgba(107, 143, 113, 0.15);
-  --moss-soft: rgba(107, 143, 113, 0.08);
-  --ember-glow: rgba(212, 132, 90, 0.15);
+  --moss-glow: rgba(111, 143, 106, 0.18);
+  --moss-soft: rgba(111, 143, 106, 0.1);
+  --ember-glow: rgba(201, 122, 86, 0.16);
   --stone-90: rgba(44, 40, 37, 0.9);
-  --surface-border: #d5cabd;
-  --card-shadow-soft: 0 6px 24px rgba(44, 40, 37, 0.09);
+  --surface-border: #d2c3b2;
+  --card-shadow-soft: 0 10px 30px rgba(48, 40, 34, 0.1);
 
   --background: var(--warm-cream);
   --foreground: var(--stone);
@@ -36,11 +36,27 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, rgba(201, 122, 86, 0.08), transparent 36%),
+    radial-gradient(circle at 88% 14%, rgba(111, 143, 106, 0.1), transparent 32%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  transition: filter 0.14s ease, transform 0.14s ease;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:not(:disabled):hover,
+button:not(:disabled):focus-visible {
+  filter: brightness(0.98);
 }
 
 .auth-screen {

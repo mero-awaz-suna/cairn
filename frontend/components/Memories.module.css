@@ -2,7 +2,7 @@
   box-sizing: border-box;
   min-height: 100svh;
   padding: 136px 24px 72px;
-  background: #f5f0ea;
+  background: #dfd0bc;
 }
 
 .container {
@@ -22,6 +22,24 @@
   font-size: clamp(1.6rem, 3vw, 2.5rem);
   line-height: 1.3;
   color: var(--stone);
+}
+
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleIcon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  color: #7f6757;
+}
+
+.titleIcon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .sub {
@@ -65,10 +83,11 @@
 
 .card {
   border-radius: 18px;
-  border: 1px solid var(--surface-border);
-  background: #ffffff;
+  border: 1px solid #b8a38b;
+  border-top: 4px solid #b56b49;
+  background: #f3e8d8;
   padding: 24px;
-  box-shadow: var(--card-shadow-soft);
+  box-shadow: 0 14px 30px rgba(72, 56, 44, 0.12);
 }
 
 .cardTitle {
@@ -156,8 +175,8 @@
 .resultCard {
   margin-top: 12px;
   border-radius: 12px;
-  border: 1px solid #ddd1c4;
-  background: #faf7f2;
+  border: 1px solid #bfa98f;
+  background: #eadbc8;
   padding: 12px;
 }
 
@@ -178,9 +197,23 @@
 
 .memoryItem {
   border-radius: 12px;
-  border: 1px solid #ddd1c4;
-  background: #faf7f2;
+  border: 1px solid #bfa98f;
+  background: #eadecc;
   padding: 12px;
+}
+
+.featuredBadge {
+  display: inline-block;
+  border: 1px solid var(--moss-light);
+  background: var(--moss-soft);
+  color: var(--moss-deep);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
 }
 
 .memoryText {
@@ -204,6 +237,49 @@
 }
 
 .memoryMeta strong {
+  font-weight: 600;
+}
+
+.memoryActions {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.insightList {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  color: var(--stone);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.helpfulBtn {
+  border: 1px solid #b9a58e;
+  background: #f7efe5;
+  color: #4f4339;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.helpfulBtn:hover,
+.helpfulBtn:focus-visible {
+  border-color: var(--moss);
+  background: #eef3e2;
+  color: var(--moss-deep);
+}
+
+.helpfulBtn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.helpfulAck {
+  font-size: 0.78rem;
+  color: var(--moss-deep);
   font-weight: 600;
 }
 

@@ -1,6 +1,7 @@
 .section {
   padding: 136px 24px 72px;
-  background: #f5f0ea;
+  min-height: 100svh;
+  background: #dfd0bc;
 }
 
 .container {
@@ -10,11 +11,12 @@
 
 .card {
   border-radius: 18px;
-  border: 1px solid var(--surface-border);
-  background: #ffffff;
+  border: 1px solid #bda88f;
+  border-top: 4px solid #b56b49;
+  background: #f4e8d8;
   padding: 24px;
   text-align: center;
-  box-shadow: var(--card-shadow-soft);
+  box-shadow: 0 14px 30px rgba(88, 62, 46, 0.12);
 }
 
 .title {
@@ -23,6 +25,24 @@
   line-height: 1.2;
   font-family: var(--font-display);
   color: var(--stone);
+}
+
+.titleRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleIcon {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  color: #875f49;
+}
+
+.titleIcon svg {
+  width: 100%;
+  height: 100%;
 }
 
 .sub {
@@ -36,10 +56,10 @@
 .circleInfo {
   margin: 14px auto 0;
   width: min(460px, 100%);
-  border: 1px solid #ddd1c4;
+  border: 1px solid #c8b39a;
   border-radius: 12px;
   padding: 10px 12px;
-  background: #faf7f2;
+  background: #efe2d0;
 }
 
 .circleIdText {
@@ -60,28 +80,7 @@
   margin: 12px auto 0;
   width: min(460px, 100%);
   display: flex;
-  gap: 8px;
-}
-
-.circleInput {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--sand);
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 0.85rem;
-  color: var(--stone);
-  background: var(--white);
-}
-
-.circleInput::placeholder {
-  color: var(--cloud);
-}
-
-.circleInput:focus {
-  outline: none;
-  border-color: var(--moss);
-  box-shadow: 0 0 0 3px var(--moss-glow);
+  justify-content: center;
 }
 
 .joinBtn {
@@ -99,7 +98,7 @@
 
 .joinBtn:disabled {
   opacity: 0.72;
-  cursor: wait;
+  cursor: not-allowed;
 }
 
 .pageBtn {
@@ -160,11 +159,7 @@
     padding: 18px;
   }
 
-  .joinRow {
-    flex-direction: column;
-  }
-
   .joinBtn {
-    width: 100%;
+    width: min(280px, 100%);
   }
 }

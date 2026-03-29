@@ -13,28 +13,29 @@ type AudioJournalResponse = {
   detail?: string;
 };
 
-type TextJournalResponse = {
-  id?: string;
-  input_type?: string;
-  assigned_persona?: string;
-  persona_confidence?: number;
-  stress_level?: number;
-  burden_themes?: string[];
-  recognition_message?: string;
-  micro_intervention?: string;
-  crisis_detected?: boolean;
-  created_at?: string;
-  message?: string;
-};
-
 type JournalHistoryEntry = {
   id: string;
-  input_type: "audio" | "text";
+  input_type?: "audio";
   assigned_persona: string;
-  stress_level: number;
   burden_themes: string[];
   crisis_detected: boolean;
   created_at: string;
+  transcript?: string | null;
+  transcript_length?: number | null;
+  audio_url?: string | null;
+  added_date?: string;
+  added_time?: string;
+};
+
+type JournalHistoryResponse = {
+  entries?: JournalHistoryEntry[];
+  message?: string;
+  detail?: string;
+};
+
+type JournalEntryDetailResponse = JournalHistoryEntry & {
+  message?: string;
+  detail?: string;
 };
 
 function buildAuthHeaders(token: string | null, includeJson = false) {
@@ -45,7 +46,7 @@ function buildAuthHeaders(token: string | null, includeJson = false) {
 }
 
 export default function JournalPanel() {
-  const [activeTab, setActiveTab] = useState<"audio" | "text" | "history">("audio");
+  const [activeTab, setActiveTab] = useState<"audio" | "history">("audio");
 
   const [isRecording, setIsRecording] = useState(false);
   const [recordedAudioBlob, setRecordedAudioBlob] = useState<Blob | null>(null);
@@ -54,39 +55,21 @@ export default function JournalPanel() {
   const [audioLoading, setAudioLoading] = useState(false);
   const [audioResult, setAudioResult] = useState<AudioJournalResponse | null>(null);
   const [audioError, setAudioError] = useState("");
+  const [audioSubmitted, setAudioSubmitted] = useState(false);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<number | null>(null);
 
-  const [rawTranscript, setRawTranscript] = useState("");
-  const [assignedPersona, setAssignedPersona] = useState("ground");
-  const [personaConfidence, setPersonaConfidence] = useState("0.8");
-  const [stressLevel, setStressLevel] = useState("5");
-  const [burdenThemes, setBurdenThemes] = useState("anxiety");
-  const [recognitionMessage, setRecognitionMessage] = useState("I hear your burden, and you are not carrying this alone.");
-  const [microIntervention, setMicroIntervention] = useState("Take three slow breaths and name one small step you can take today.");
-  const [crisisDetected, setCrisisDetected] = useState(false);
-  const [crisisKeywords, setCrisisKeywords] = useState("");
-
-  const [textLoading, setTextLoading] = useState(false);
-  const [textResult, setTextResult] = useState<TextJournalResponse | null>(null);
-  const [textError, setTextError] = useState("");
-
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyData, setHistoryData] = useState<JournalHistoryEntry[]>([]);
   const [historyError, setHistoryError] = useState("");
-
-  const parsedThemes = useMemo(
-    () => burdenThemes.split(",").map((item) => item.trim()).filter(Boolean),
-    [burdenThemes],
-  );
-
-  const parsedCrisisKeywords = useMemo(
-    () => crisisKeywords.split(",").map((item) => item.trim()).filter(Boolean),
-    [crisisKeywords],
-  );
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
+  const [selectedEntryDetail, setSelectedEntryDetail] = useState<JournalEntryDetailResponse | null>(null);
+  const [entryDetailLoading, setEntryDetailLoading] = useState(false);
+  const [entryDetailError, setEntryDetailError] = useState("");
 
   useEffect(() => {
     return () => {
@@ -107,6 +90,7 @@ export default function JournalPanel() {
   async function startRecording() {
     setAudioError("");
     setAudioResult(null);
+    setAudioSubmitted(false);
 
     if (!navigator.mediaDevices?.getUserMedia) {
       setAudioError("Microphone recording is not supported in this browser.");
@@ -128,6 +112,7 @@ export default function JournalPanel() {
 
       setRecordedAudioBlob(null);
       setRecordingSeconds(0);
+      setAudioSubmitted(false);
 
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
@@ -188,6 +173,7 @@ export default function JournalPanel() {
     setRecordingSeconds(0);
     setAudioError("");
     setAudioResult(null);
+    setAudioSubmitted(false);
   }
 
   async function handleAudioSubmit(event: FormEvent<HTMLFormElement>) {
@@ -230,56 +216,11 @@ export default function JournalPanel() {
       }
 
       setAudioResult(data);
+      setAudioSubmitted(true);
     } catch (apiError) {
       setAudioError(apiError instanceof Error ? apiError.message : "Failed to submit audio journal.");
     } finally {
       setAudioLoading(false);
-    }
-  }
-
-  async function handleTextSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!rawTranscript.trim()) {
-      setTextError("Please enter journal text.");
-      setTextResult(null);
-      return;
-    }
-
-    setTextLoading(true);
-    setTextError("");
-    setTextResult(null);
-
-    try {
-      const token = getStoredToken();
-      const response = await fetch(buildApiUrl("/journal/text"), {
-        method: "POST",
-        headers: buildAuthHeaders(token, true),
-        body: JSON.stringify({
-          raw_transcript: rawTranscript.trim(),
-          assigned_persona: assignedPersona.trim() || "ground",
-          persona_confidence: Number(personaConfidence),
-          stress_level: Number(stressLevel),
-          burden_themes: parsedThemes,
-          recognition_message: recognitionMessage.trim(),
-          micro_intervention: microIntervention.trim(),
-          crisis_detected: crisisDetected,
-          crisis_keywords: parsedCrisisKeywords,
-          ai_model_used: "claude-sonnet-4-20250514",
-          ai_processing_ms: 0,
-        }),
-      });
-
-      const data = (await response.json().catch(() => null)) as TextJournalResponse | null;
-      if (!response.ok) {
-        throw new Error(data?.message ?? "Failed to submit text journal.");
-      }
-
-      setTextResult(data);
-    } catch (apiError) {
-      setTextError(apiError instanceof Error ? apiError.message : "Failed to submit text journal.");
-    } finally {
-      setTextLoading(false);
     }
   }
 
@@ -294,26 +235,103 @@ export default function JournalPanel() {
         headers: buildAuthHeaders(token),
       });
 
-      const data = (await response.json().catch(() => null)) as JournalHistoryEntry[] | { message?: string } | null;
+      const data = (await response.json().catch(() => null)) as JournalHistoryEntry[] | JournalHistoryResponse | null;
       if (!response.ok) {
-        const maybeError = data as { message?: string } | null;
+        const maybeError = data as JournalHistoryResponse | null;
         throw new Error(maybeError?.message ?? "Failed to load journal history.");
       }
 
-      setHistoryData(Array.isArray(data) ? data : []);
+      const resolvedEntries = Array.isArray(data) ? data : (data?.entries ?? []);
+      setHistoryData(resolvedEntries);
+      setSelectedEntryId(null);
+      setSelectedEntryDetail(null);
+      setEntryDetailError("");
     } catch (apiError) {
       setHistoryError(apiError instanceof Error ? apiError.message : "Failed to load journal history.");
       setHistoryData([]);
+      setSelectedEntryId(null);
+      setSelectedEntryDetail(null);
+      setEntryDetailError("");
     } finally {
       setHistoryLoading(false);
+    }
+  }
+
+  async function handleSelectHistoryEntry(entryId: string) {
+    if (entryId === selectedEntryId) {
+      setSelectedEntryId(null);
+      setSelectedEntryDetail(null);
+      setEntryDetailError("");
+      return;
+    }
+
+    setSelectedEntryId(entryId);
+    setEntryDetailLoading(true);
+    setEntryDetailError("");
+    setSelectedEntryDetail(null);
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(buildApiUrl(`/journal/history/${encodeURIComponent(entryId)}`), {
+        method: "GET",
+        headers: buildAuthHeaders(token),
+      });
+
+      const data = (await response.json().catch(() => null)) as JournalEntryDetailResponse | null;
+      if (!response.ok) {
+        throw new Error(data?.message ?? data?.detail ?? "Failed to load journal transcript.");
+      }
+
+      setSelectedEntryDetail(data);
+    } catch (apiError) {
+      setEntryDetailError(apiError instanceof Error ? apiError.message : "Failed to load journal transcript.");
+    } finally {
+      setEntryDetailLoading(false);
+    }
+  }
+
+  async function handleDeleteHistoryEntry(entryId: string) {
+    const approved = window.confirm("Delete this journal entry? This cannot be undone.");
+    if (!approved) {
+      return;
+    }
+
+    setDeletingEntryId(entryId);
+    setHistoryError("");
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(buildApiUrl(`/journal/history/${encodeURIComponent(entryId)}`), {
+        method: "DELETE",
+        headers: buildAuthHeaders(token),
+      });
+
+      const data = (await response.json().catch(() => null)) as JournalHistoryResponse | null;
+      if (!response.ok) {
+        throw new Error(data?.message ?? data?.detail ?? "Failed to delete journal entry.");
+      }
+
+      setHistoryData((previous) => previous.filter((entry) => entry.id !== entryId));
+    } catch (apiError) {
+      setHistoryError(apiError instanceof Error ? apiError.message : "Failed to delete journal entry.");
+    } finally {
+      setDeletingEntryId(null);
     }
   }
 
   return (
     <section className={styles.section}>
       <div className={styles.container}>
-        <h2 className={styles.heading}>Journal</h2>
-        <p className={styles.subtitle}>Speak, write, and revisit your entries from one place.</p>
+        <div className={styles.headingRow}>
+          <span className={styles.headingIcon} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M7 5.5h8.5a1.5 1.5 0 0 1 1.5 1.5v11.5H8.5A1.5 1.5 0 0 1 7 17V5.5Z" stroke="currentColor" strokeWidth="1.7" />
+              <path d="M9.8 9.2h4.8M9.8 12h4.8" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+            </svg>
+          </span>
+          <h2 className={styles.heading}>Journal</h2>
+        </div>
+        <p className={styles.subtitle}>Speak and revisit your audio entries from one place.</p>
 
         <div className={styles.tabRow} role="tablist" aria-label="Journal tabs">
           <button
@@ -322,13 +340,6 @@ export default function JournalPanel() {
             onClick={() => setActiveTab("audio")}
           >
             Audio Journal
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === "text" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("text")}
-          >
-            Text Journal
           </button>
           <button
             type="button"
@@ -368,7 +379,7 @@ export default function JournalPanel() {
             ) : null}
 
             <form onSubmit={handleAudioSubmit}>
-              <button type="submit" className={styles.submitBtn} disabled={audioLoading || !recordedAudioBlob}>
+              <button type="submit" className={styles.submitBtn} disabled={audioLoading || !recordedAudioBlob || audioSubmitted}>
                 {audioLoading ? "Submitting..." : "Submit Audio Journal"}
               </button>
             </form>
@@ -381,37 +392,6 @@ export default function JournalPanel() {
                 <p><strong>Storage:</strong> {audioResult.storage_path ?? "-"}</p>
               </div>
             ) : null}
-          </section>
-        ) : null}
-
-        {activeTab === "text" ? (
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>Write your journal</h3>
-            <p className={styles.cardSub}>Type your thoughts. We send this to your text journal endpoint.</p>
-
-            <form className={styles.formBody} onSubmit={handleTextSubmit}>
-              <textarea
-                className={styles.textarea}
-                value={rawTranscript}
-                onChange={(event) => setRawTranscript(event.target.value)}
-                placeholder="Write your journal entry..."
-                rows={6}
-              />
-
-              <button type="submit" className={styles.submitBtn} disabled={textLoading}>
-                {textLoading ? "Submitting..." : "Submit Text Journal"}
-              </button>
-
-              {textError ? <p className={styles.error}>{textError}</p> : null}
-              {textResult ? (
-                <div className={styles.resultCard}>
-                  <p><strong>Entry ID:</strong> {textResult.id ?? "-"}</p>
-                  <p><strong>Persona:</strong> {textResult.assigned_persona ?? "-"}</p>
-                  <p><strong>Stress:</strong> {textResult.stress_level ?? "-"}</p>
-                  <p><strong>Created:</strong> {textResult.created_at ? new Date(textResult.created_at).toLocaleString() : "-"}</p>
-                </div>
-              ) : null}
-            </form>
           </section>
         ) : null}
 
@@ -429,20 +409,49 @@ export default function JournalPanel() {
             {historyData.length > 0 ? (
               <ul className={styles.historyList}>
                 {historyData.map((entry) => (
-                  <li key={entry.id} className={styles.historyItem}>
+                  <li
+                    key={entry.id}
+                    className={`${styles.historyItem} ${selectedEntryId === entry.id ? styles.historyItemActive : ""}`}
+                    onClick={() => void handleSelectHistoryEntry(entry.id)}
+                  >
                     <p className={styles.historyMain}>
-                      <strong>{entry.input_type === "audio" ? "Audio" : "Text"}</strong>
+                      <strong>Audio</strong>
                       <span>{new Date(entry.created_at).toLocaleString()}</span>
                     </p>
-                    <p>Persona: {entry.assigned_persona} • Stress: {entry.stress_level}</p>
+                    <p>Persona: {entry.assigned_persona}</p>
                     <p>Themes: {entry.burden_themes?.length ? entry.burden_themes.join(", ") : "none"}</p>
                     <p>Crisis detected: {entry.crisis_detected ? "Yes" : "No"}</p>
+                    <p className={styles.historyHint}>Tap to view transcript</p>
+                    <button
+                      type="button"
+                      className={styles.deleteBtn}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDeleteHistoryEntry(entry.id);
+                      }}
+                      disabled={deletingEntryId === entry.id}
+                    >
+                      {deletingEntryId === entry.id ? "Deleting..." : "Delete"}
+                    </button>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className={styles.muted}>No journal entries found yet.</p>
             )}
+
+            {selectedEntryId ? (
+              <div className={styles.transcriptPanel}>
+                <h4 className={styles.transcriptTitle}>Transcript</h4>
+                {entryDetailLoading ? <p className={styles.muted}>Loading transcript...</p> : null}
+                {!entryDetailLoading && entryDetailError ? <p className={styles.error}>{entryDetailError}</p> : null}
+                {!entryDetailLoading && !entryDetailError ? (
+                  <p className={styles.transcriptText}>
+                    {selectedEntryDetail?.transcript?.trim() || "No transcription text available for this entry."}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </section>
         ) : null}
       </div>

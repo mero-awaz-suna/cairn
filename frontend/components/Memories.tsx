@@ -1,386 +1,143 @@
 "use client";
 
-import { FormEvent, useState } from "react";
-import { getStoredToken } from "@/lib/auth-client";
-import { buildApiUrl } from "@/lib/api-base";
+import { useMemo } from "react";
 import styles from "./Memories.module.css";
 
-type MemoryItem = {
+type MemoryWallRecord = {
+  idx: number;
   id: string;
-  quote_text: string;
-  burden_tag: string;
-  cultural_tag: string;
-  helped_count: number;
-  author_persona?: string;
-  is_featured?: boolean;
+  source_circle_id: string;
+  primary_stressor: string;
+  headline: string;
+  insights: string;
+  stressor_dist: string;
+  helpful_count: number;
+  is_approved: boolean;
+  ai_safety_score: number;
+  cultural_context: string | null;
   created_at: string;
 };
 
-type SubmitMemoryResponse = {
-  id?: string;
-  quote_text?: string;
-  burden_tag?: string;
-  cultural_tag?: string;
-  is_approved?: boolean;
-  message?: string;
-  detail?: string;
-};
+const HARD_CODED_MEMORY_WALL: MemoryWallRecord[] = [
+  {
+    idx: 0,
+    id: "eff5dc99-3040-4499-8339-14242694a00a",
+    source_circle_id: "f2eafc35-76c6-43d9-b810-c49e65b14870",
+    primary_stressor: "isolation",
+    headline: "Members found practical routines that reduced overwhelm.",
+    insights: JSON.stringify([
+      "Someone used a wind-down routine to improve sleep consistency.",
+      "A member used short walks to reset between tasks.",
+    ]),
+    stressor_dist: JSON.stringify([0.05, 0.05, 0.1, 0.05, 0.05, 0.1, 0.5, 0.1]),
+    helpful_count: 0,
+    is_approved: true,
+    ai_safety_score: 0.98,
+    cultural_context: null,
+    created_at: "2026-03-29 13:17:39.174004+00",
+  },
+  {
+    idx: 1,
+    id: "a621e661-4e91-45de-a1c5-f3cc603b1d31",
+    source_circle_id: "f2eafc35-76c6-43d9-b810-c49e65b14870",
+    primary_stressor: "work_stress",
+    headline: "Tiny planning habits helped members regain control of busy days.",
+    insights: JSON.stringify([
+      "Writing only 3 priority tasks reduced decision fatigue.",
+      "A 10-minute shutdown ritual made evenings less anxious.",
+      "Pairing hard tasks with short breaks improved follow-through.",
+    ]),
+    stressor_dist: JSON.stringify([0.08, 0.06, 0.42, 0.07, 0.05, 0.1, 0.12, 0.1]),
+    helpful_count: 3,
+    is_approved: true,
+    ai_safety_score: 0.97,
+    cultural_context: "urban",
+    created_at: "2026-03-28 09:11:21.882341+00",
+  },
+];
 
-type HelpfulResponse = {
-  status?: string;
-  message?: string;
-  detail?: string;
-};
-
-type ApiError = {
-  message?: string;
-  detail?: string;
-  error?: string;
-};
-
-function buildAuthHeaders(token: string | null, includeJson = false) {
-  return {
-    ...(includeJson ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
+function parseStringArray(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
-function parseApiError(data: ApiError | null, fallbackMessage: string) {
-  return data?.message ?? data?.detail ?? data?.error ?? fallbackMessage;
+function parseNumberArray(raw: string): number[] {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return Array.isArray(parsed) ? parsed.filter((item): item is number => typeof item === "number") : [];
+  } catch {
+    return [];
+  }
 }
-
-type TabKey = "browse" | "submit" | "helpful";
 
 export default function Memories() {
-  const [activeTab, setActiveTab] = useState<TabKey>("browse");
-
-  const [culturalFilter, setCulturalFilter] = useState("");
-  const [memoriesLoading, setMemoriesLoading] = useState(false);
-  const [memoriesError, setMemoriesError] = useState("");
-  const [memories, setMemories] = useState<MemoryItem[]>([]);
-
-  const [quoteText, setQuoteText] = useState("");
-  const [burdenTag, setBurdenTag] = useState("anxiety");
-  const [culturalTag, setCulturalTag] = useState("universal");
-  const [sourceSessionId, setSourceSessionId] = useState("");
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const [submitError, setSubmitError] = useState("");
-  const [submitResult, setSubmitResult] = useState<SubmitMemoryResponse | null>(null);
-
-  const [helpfulMemoryId, setHelpfulMemoryId] = useState("");
-  const [helpfulLoading, setHelpfulLoading] = useState(false);
-  const [helpfulError, setHelpfulError] = useState("");
-  const [helpfulResult, setHelpfulResult] = useState<HelpfulResponse | null>(null);
-
-  async function handleGetMemories(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
-
-    setMemoriesLoading(true);
-    setMemoriesError("");
-
-    try {
-      const query = culturalFilter.trim()
-        ? `?cultural_tag=${encodeURIComponent(culturalFilter.trim())}`
-        : "";
-
-      const response = await fetch(buildApiUrl(`/memories/${query}`), {
-        method: "GET",
-      });
-
-      const data = (await response.json().catch(() => null)) as MemoryItem[] | ApiError | null;
-      if (!response.ok) {
-        throw new Error(parseApiError(data as ApiError | null, "Failed to load memories."));
-      }
-
-      setMemories(Array.isArray(data) ? data : []);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to load memories.";
-      setMemoriesError(message);
-      setMemories([]);
-    } finally {
-      setMemoriesLoading(false);
-    }
-  }
-
-  async function handleSubmitMemory(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!quoteText.trim()) {
-      setSubmitError("Quote text is required.");
-      setSubmitResult(null);
-      return;
-    }
-
-    if (!burdenTag.trim()) {
-      setSubmitError("Burden tag is required.");
-      setSubmitResult(null);
-      return;
-    }
-
-    const token = getStoredToken();
-    if (!token) {
-      setSubmitError("You need to sign in before submitting a memory.");
-      setSubmitResult(null);
-      return;
-    }
-
-    setSubmitLoading(true);
-    setSubmitError("");
-    setSubmitResult(null);
-
-    try {
-      const response = await fetch(buildApiUrl("/memories/"), {
-        method: "POST",
-        headers: buildAuthHeaders(token, true),
-        body: JSON.stringify({
-          quote_text: quoteText.trim(),
-          burden_tag: burdenTag.trim(),
-          cultural_tag: culturalTag.trim() || "universal",
-          source_session_id: sourceSessionId.trim() || null,
-        }),
-      });
-
-      const data = (await response.json().catch(() => null)) as SubmitMemoryResponse | ApiError | null;
-      if (!response.ok) {
-        const authFailure = response.status === 401 || response.status === 403;
-        const fallback = authFailure
-          ? "Session expired. Please sign in again before submitting memory."
-          : "Failed to submit memory.";
-        throw new Error(parseApiError(data as ApiError | null, fallback));
-      }
-
-      setSubmitResult(data as SubmitMemoryResponse);
-      setQuoteText("");
-      setBurdenTag("anxiety");
-      setCulturalTag("universal");
-      setSourceSessionId("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to submit memory.";
-      setSubmitError(message);
-    } finally {
-      setSubmitLoading(false);
-    }
-  }
-
-  async function handleMarkHelpful(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!helpfulMemoryId.trim()) {
-      setHelpfulError("Memory ID is required.");
-      setHelpfulResult(null);
-      return;
-    }
-
-    const token = getStoredToken();
-    if (!token) {
-      setHelpfulError("You need to sign in before marking a memory as helpful.");
-      setHelpfulResult(null);
-      return;
-    }
-
-    setHelpfulLoading(true);
-    setHelpfulError("");
-    setHelpfulResult(null);
-
-    try {
-      const response = await fetch(buildApiUrl(`/memories/${encodeURIComponent(helpfulMemoryId.trim())}/helpful`), {
-        method: "POST",
-        headers: buildAuthHeaders(token),
-      });
-
-      const data = (await response.json().catch(() => null)) as HelpfulResponse | ApiError | null;
-      if (!response.ok) {
-        const authFailure = response.status === 401 || response.status === 403;
-        const fallback = authFailure
-          ? "Session expired. Please sign in again before marking helpful."
-          : "Failed to mark memory as helpful.";
-        throw new Error(parseApiError(data as ApiError | null, fallback));
-      }
-
-      setHelpfulResult(data as HelpfulResponse);
-      setHelpfulMemoryId("");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to mark memory as helpful.";
-      setHelpfulError(message);
-    } finally {
-      setHelpfulLoading(false);
-    }
-  }
+  const records = useMemo(() => HARD_CODED_MEMORY_WALL, []);
 
   return (
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Memory Wall</h2>
-          <p className={styles.sub}>Browse shared moments from the community, add your own wisdom, and recognize what helps.</p>
+          <div className={styles.titleRow}>
+            <span className={styles.titleIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <rect x="6" y="6" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M9.5 12h5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </span>
+            <h2 className={styles.title}>Memory Wall</h2>
+          </div>
+          <p className={styles.sub}>Shared moments from circles, with insights and stressor distribution.</p>
         </div>
 
-        <div className={styles.tabRow} role="tablist" aria-label="Memory tabs">
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === "browse" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("browse")}
-            role="tab"
-            aria-selected={activeTab === "browse"}
-          >
-            Browse Memories
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === "submit" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("submit")}
-            role="tab"
-            aria-selected={activeTab === "submit"}
-          >
-            Share Your Memory
-          </button>
-          <button
-            type="button"
-            className={`${styles.tabBtn} ${activeTab === "helpful" ? styles.tabActive : ""}`}
-            onClick={() => setActiveTab("helpful")}
-            role="tab"
-            aria-selected={activeTab === "helpful"}
-          >
-            Mark as Helpful
-          </button>
-        </div>
+        <section className={styles.card}>
+          <h3 className={styles.cardTitle}>Memory Wall</h3>
+          <p className={styles.cardSub}>Showing approved memories with key metadata.</p>
 
-        {activeTab === "browse" ? (
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>Browse approved memories</h3>
-            <p className={styles.cardSub}>Filter by cultural background.</p>
+          <ul className={styles.memoryList}>
+            {records.map((record) => {
+              const insights = parseStringArray(record.insights);
+              const distribution = parseNumberArray(record.stressor_dist);
 
-            <form className={styles.formBody} onSubmit={handleGetMemories}>
-              <input
-                className={styles.input}
-                type="text"
-                value={culturalFilter}
-                onChange={(event) => setCulturalFilter(event.target.value)}
-                placeholder="Leave blank for all, or enter: universal, christian, muslim, jewish, etc."
-              />
-              <button type="submit" className={styles.submitBtn} disabled={memoriesLoading}>
-                {memoriesLoading ? "Loading..." : "Load Memories"}
-              </button>
-            </form>
+              return (
+                <li key={record.id} className={styles.memoryItem}>
+                  <p className={styles.memoryText}>{record.headline}</p>
 
-            {memoriesError ? <p className={styles.error}>{memoriesError}</p> : null}
+                  <p className={styles.memoryMeta}>
+                    <span><strong>Primary stressor:</strong> {record.primary_stressor}</span>
+                    <span><strong>Helpful count:</strong> {record.helpful_count}</span>
+                    <span><strong>Approved:</strong> {record.is_approved ? "yes" : "no"}</span>
+                    <span><strong>Safety score:</strong> {record.ai_safety_score.toFixed(2)}</span>
+                  </p>
 
-            {memories.length > 0 ? (
-              <ul className={styles.memoryList}>
-                {memories.map((memory) => (
-                  <li key={memory.id} className={styles.memoryItem}>
-                    <p className={styles.memoryText}>{memory.quote_text}</p>
+                  <p className={styles.memoryMeta}>
+                    <span><strong>ID:</strong> {record.id}</span>
+                    <span><strong>Circle ID:</strong> {record.source_circle_id}</span>
+                    <span><strong>Created:</strong> {record.created_at}</span>
+                  </p>
+
+                  {insights.length > 0 ? (
+                    <ul className={styles.insightList}>
+                      {insights.map((insight, index) => (
+                        <li key={`${record.id}-insight-${index}`}>{insight}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+
+                  {distribution.length > 0 ? (
                     <p className={styles.memoryMeta}>
-                      {memory.burden_tag && <span><strong>Burden:</strong> {memory.burden_tag}</span>}
-                      {memory.cultural_tag && <span><strong>Culture:</strong> {memory.cultural_tag}</span>}
-                      {memory.helped_count > 0 && <span><strong>Helpful:</strong> {memory.helped_count}</span>}
+                      <span><strong>stressor_dist:</strong> [{distribution.map((value) => value.toFixed(2)).join(", ")}]</span>
                     </p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className={styles.muted}>No memories loaded yet.</p>
-            )}
-          </section>
-        ) : null}
+                  ) : null}
 
-        {activeTab === "submit" ? (
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>Share your memory</h3>
-            <p className={styles.cardSub}>What wisdom or moment helped you? It will go through safety review before appearing.</p>
-
-            <form className={styles.formBody} onSubmit={handleSubmitMemory}>
-              <label className={styles.label} htmlFor="quote-text">
-                Your memory
-              </label>
-              <textarea
-                id="quote-text"
-                className={styles.textarea}
-                value={quoteText}
-                onChange={(event) => setQuoteText(event.target.value)}
-                placeholder="Write a quote, lesson, or moment that helped you..."
-                rows={5}
-              />
-
-              <label className={styles.label} htmlFor="burden-tag">
-                Primary burden or theme
-              </label>
-              <input
-                id="burden-tag"
-                className={styles.input}
-                value={burdenTag}
-                onChange={(event) => setBurdenTag(event.target.value)}
-                placeholder="e.g., anxiety, grief, isolation, work stress"
-              />
-
-              <label className={styles.label} htmlFor="cultural-tag">
-                Cultural background (optional)
-              </label>
-              <input
-                id="cultural-tag"
-                className={styles.input}
-                value={culturalTag}
-                onChange={(event) => setCulturalTag(event.target.value)}
-                placeholder="e.g., universal, christian, muslim, jewish"
-              />
-
-              <label className={styles.label} htmlFor="source-session-id">
-                Session ID (optional)
-              </label>
-              <input
-                id="source-session-id"
-                className={styles.input}
-                value={sourceSessionId}
-                onChange={(event) => setSourceSessionId(event.target.value)}
-                placeholder="Link to session if this memory came from a group"
-              />
-
-              <button type="submit" className={styles.submitBtn} disabled={submitLoading}>
-                {submitLoading ? "Submitting..." : "Submit Memory"}
-              </button>
-            </form>
-
-            {submitError ? <p className={styles.error}>{submitError}</p> : null}
-            {submitResult ? (
-              <div className={styles.resultCard}>
-                <p><strong>Memory submitted!</strong></p>
-                <p>{submitResult.id && `ID: ${submitResult.id}`}</p>
-                <p>Your memory has been sent for review.</p>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
-
-        {activeTab === "helpful" ? (
-          <section className={styles.card}>
-            <h3 className={styles.cardTitle}>Mark a memory as helpful</h3>
-            <p className={styles.cardSub}>Let others know when a memory resonated with you.</p>
-
-            <form className={styles.formBody} onSubmit={handleMarkHelpful}>
-              <label className={styles.label} htmlFor="memory-id">
-                Memory ID
-              </label>
-              <input
-                id="memory-id"
-                className={styles.input}
-                value={helpfulMemoryId}
-                onChange={(event) => setHelpfulMemoryId(event.target.value)}
-                placeholder="Paste the memory ID you found helpful"
-              />
-
-              <button type="submit" className={styles.submitBtn} disabled={helpfulLoading}>
-                {helpfulLoading ? "Saving..." : "Mark as Helpful"}
-              </button>
-            </form>
-
-            {helpfulError ? <p className={styles.error}>{helpfulError}</p> : null}
-            {helpfulResult ? (
-              <div className={styles.resultCard}>
-                <p><strong>Thanks!</strong> Your vote has been recorded.</p>
-              </div>
-            ) : null}
-          </section>
-        ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       </div>
     </section>
   );

@@ -7,7 +7,7 @@ import { buildApiUrl } from "@/lib/api-base";
 import CairnLogo from "./CairnLogo";
 import styles from "./Navbar.module.css";
 
-export type MenuView = "home" | "findMyCircle" | "viewMyCircle" | "journal" | "joinSession" | "viewPreviousSessions" | "memories";
+export type MenuView = "home" | "findMyCircle" | "viewMyCircle" | "journal" | "memories" | "me";
 
 type NavbarProps = {
   activeView: MenuView;
@@ -20,8 +20,6 @@ const MENU_ITEMS: Array<{ key: MenuView; label: string }> = [
   { key: "findMyCircle", label: "Find My Circle" },
   { key: "viewMyCircle", label: "View My Circle" },
   { key: "journal", label: "Journal" },
-  { key: "joinSession", label: "Join a Session" },
-  { key: "viewPreviousSessions", label: "View Previous Sessions" },
   { key: "memories", label: "Memories" },
 ];
 
@@ -29,6 +27,7 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [isDeletingUser, setIsDeletingUser] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
@@ -62,6 +61,23 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
     };
   }, [profileMenuOpen]);
 
+  useEffect(() => {
+    if (!isDeleteConfirmOpen) {
+      return;
+    }
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === "Escape" && !isDeletingUser) {
+        setIsDeleteConfirmOpen(false);
+      }
+    }
+
+    window.addEventListener("keydown", handleEscape);
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [isDeleteConfirmOpen, isDeletingUser]);
+
   function handleLogout() {
     clearStoredAuth();
     setProfileMenuOpen(false);
@@ -70,11 +86,6 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
   }
 
   async function handleDeleteUser() {
-    const confirmed = window.confirm("Are you sure you want to delete your user account?\n\nChoose OK for Yes, or Cancel for No.");
-    if (!confirmed) {
-      return;
-    }
-
     setIsDeletingUser(true);
 
     try {
@@ -92,6 +103,7 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
       }
 
       clearStoredAuth();
+      setIsDeleteConfirmOpen(false);
       setProfileMenuOpen(false);
       setMenuOpen(false);
       router.replace("/login");
@@ -152,6 +164,19 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
               </svg>
             </button>
             <div id="profile-menu" className={styles.profileDropdown} data-open={profileMenuOpen ? "true" : "false"} role="menu" aria-label="Profile options">
+              <button
+                type="button"
+                className={styles.profileMenuItem}
+                role="menuitem"
+                onClick={() => {
+                  onChangeView("me");
+                  setMenuOpen(false);
+                  setProfileMenuOpen(false);
+                }}
+                disabled={isDeletingUser}
+              >
+                Me
+              </button>
               <button type="button" className={styles.profileMenuItem} role="menuitem" onClick={handleLogout} disabled={isDeletingUser}>
                 Log out
               </button>
@@ -159,7 +184,10 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
                 type="button"
                 className={`${styles.profileMenuItem} ${styles.profileMenuDanger}`}
                 role="menuitem"
-                onClick={() => void handleDeleteUser()}
+                onClick={() => {
+                  setProfileMenuOpen(false);
+                  setIsDeleteConfirmOpen(true);
+                }}
                 disabled={isDeletingUser}
               >
                 {isDeletingUser ? "Deleting..." : "Delete user"}
@@ -180,6 +208,46 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
           </button>
         </div>
       </div>
+
+      {isDeleteConfirmOpen ? (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() => {
+            if (!isDeletingUser) {
+              setIsDeleteConfirmOpen(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalCard}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Delete user confirmation"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className={styles.modalTitle}>Delete your account?</h3>
+            <p className={styles.modalText}>This action is permanent and cannot be undone.</p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalCancelBtn}
+                onClick={() => setIsDeleteConfirmOpen(false)}
+                disabled={isDeletingUser}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.modalConfirmBtn}
+                onClick={() => void handleDeleteUser()}
+                disabled={isDeletingUser}
+              >
+                {isDeletingUser ? "Deleting..." : "Delete User"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </nav>
   );
 }

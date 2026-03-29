@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
 import { buildApiUrl } from "@/lib/api-base";
 import styles from "./CircleScience.module.css";
 
-const JOIN_CIRCLE_ENDPOINT = "/circles/join";
+const JOIN_CIRCLE_ENDPOINT = "/circles/request";
 const CIRCLES_BASE_ENDPOINT = "/circles";
 const LAST_CIRCLE_ID_STORAGE_KEY = "cairn.lastCircleId";
 
@@ -20,9 +20,21 @@ export default function FindMyCircle() {
   const [isJoiningById, setIsJoiningById] = useState(false);
   const [circleId, setCircleId] = useState("");
   const [circleStatus, setCircleStatus] = useState("");
-  const [joinCircleId, setJoinCircleId] = useState("");
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  // Sync with localStorage on mount and when it changes
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const storedCircleId = window.localStorage.getItem(LAST_CIRCLE_ID_STORAGE_KEY);
+    setCircleId(storedCircleId || "");
+    setCircleStatus("");
+    setMessage("");
+    setError("");
+  }, []);
 
   function buildAuthHeaders(token: string | null, includeJsonContentType = false) {
     return {
@@ -63,10 +75,9 @@ export default function FindMyCircle() {
       }
 
       setCircleId(data.circle_id);
-      setJoinCircleId(data.circle_id);
       setCircleStatus(data.status ?? "");
       persistCircleId(data.circle_id);
-      // setMessage(data?.message ?? "Circle found. Use the Circle ID below to join.");
+      setMessage(data?.message ?? "Circle found. You can now join this circle.");
     } catch (apiError) {
       const apiMessage = apiError instanceof Error ? apiError.message : "Unable to join a circle right now.";
       setError(apiMessage);
@@ -76,9 +87,9 @@ export default function FindMyCircle() {
   }
 
   async function handleJoinByCircleId() {
-    const targetCircleId = joinCircleId.trim();
+    const targetCircleId = circleId.trim();
     if (!targetCircleId) {
-      setError("Please enter a circle ID.");
+      setError("Find a circle first to enable joining.");
       setMessage("");
       return;
     }
@@ -116,8 +127,17 @@ export default function FindMyCircle() {
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.card}>
-          <h2 className={styles.title}>Find My Circle</h2>
-          <p className={styles.sub}>Tap once to retrieve your circle ID, then join with that ID.</p>
+          <div className={styles.titleRow}>
+            <span className={styles.titleIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="7.5" stroke="currentColor" strokeWidth="1.7" />
+                <circle cx="12" cy="12" r="2" fill="currentColor" />
+              </svg>
+            </span>
+            <h2 className={styles.title}>Find My Circle</h2>
+          </div>
+          <p className={styles.sub}>Come discover your circle, where you will meet people like you, walking through a similar season of life.</p>
+
           <button type="button" className={styles.pageBtn} onClick={handleFindCircle} disabled={isFinding}>
             {isFinding ? "Finding..." : "Find Circle"}
           </button>
@@ -130,20 +150,11 @@ export default function FindMyCircle() {
           ) : null}
 
           <div className={styles.joinRow}>
-            <input
-              className={styles.circleInput}
-              type="text"
-              value={joinCircleId}
-              onChange={(event) => setJoinCircleId(event.target.value)}
-              placeholder="Paste circle ID"
-              aria-label="Circle ID"
-              disabled={isJoiningById}
-            />
             <button
               type="button"
               className={styles.joinBtn}
               onClick={handleJoinByCircleId}
-              disabled={isJoiningById}
+              disabled={isJoiningById || !circleId}
             >
               {isJoiningById ? "Joining..." : "Join"}
             </button>

@@ -18,7 +18,6 @@ type TextJournalResponse = {
   input_type?: string;
   assigned_persona?: string;
   persona_confidence?: number;
-  stress_level?: number;
   burden_themes?: string[];
   recognition_message?: string;
   micro_intervention?: string;
@@ -29,12 +28,17 @@ type TextJournalResponse = {
 
 type JournalHistoryEntry = {
   id: string;
-  input_type: "audio" | "text";
+  input_type?: "audio" | "text";
   assigned_persona: string;
-  stress_level: number;
-  burden_themes: string[];
+  burden_themes?: string[];
   crisis_detected: boolean;
   created_at: string;
+};
+
+type JournalHistoryResponse = {
+  entries?: JournalHistoryEntry[];
+  message?: string;
+  detail?: string;
 };
 
 function buildAuthHeaders(token: string | null, includeJson = false) {
@@ -55,7 +59,6 @@ export default function Journal() {
   const [rawTranscript, setRawTranscript] = useState("");
   const [assignedPersona, setAssignedPersona] = useState("ground");
   const [personaConfidence, setPersonaConfidence] = useState("0.8");
-  const [stressLevel, setStressLevel] = useState("5");
   const [burdenThemes, setBurdenThemes] = useState("anxiety");
   const [recognitionMessage, setRecognitionMessage] = useState("I hear your burden, and you are not carrying this alone.");
   const [microIntervention, setMicroIntervention] = useState("Take three slow breaths and name one small step you can take today.");
@@ -69,6 +72,7 @@ export default function Journal() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyData, setHistoryData] = useState<JournalHistoryEntry[]>([]);
   const [historyError, setHistoryError] = useState("");
+  const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
 
   const parsedThemes = useMemo(
     () => burdenThemes.split(",").map((item) => item.trim()).filter(Boolean),
@@ -149,7 +153,6 @@ export default function Journal() {
           raw_transcript: rawTranscript.trim(),
           assigned_persona: assignedPersona.trim() || "ground",
           persona_confidence: Number(personaConfidence),
-          stress_level: Number(stressLevel),
           burden_themes: parsedThemes,
           recognition_message: recognitionMessage.trim(),
           micro_intervention: microIntervention.trim(),
@@ -184,18 +187,48 @@ export default function Journal() {
         headers: buildAuthHeaders(token),
       });
 
-      const data = (await response.json().catch(() => null)) as JournalHistoryEntry[] | { message?: string } | null;
+      const data = (await response.json().catch(() => null)) as JournalHistoryEntry[] | JournalHistoryResponse | null;
       if (!response.ok) {
-        const maybeError = data as { message?: string } | null;
+        const maybeError = data as JournalHistoryResponse | null;
         throw new Error(maybeError?.message ?? "Failed to load journal history.");
       }
 
-      setHistoryData(Array.isArray(data) ? data : []);
+      const resolvedEntries = Array.isArray(data) ? data : (data?.entries ?? []);
+      setHistoryData(resolvedEntries);
     } catch (apiError) {
       setHistoryError(apiError instanceof Error ? apiError.message : "Failed to load journal history.");
       setHistoryData([]);
     } finally {
       setHistoryLoading(false);
+    }
+  }
+
+  async function handleDeleteHistoryEntry(entryId: string) {
+    const approved = window.confirm("Delete this journal entry? This cannot be undone.");
+    if (!approved) {
+      return;
+    }
+
+    setDeletingEntryId(entryId);
+    setHistoryError("");
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(buildApiUrl(`/journal/history/${encodeURIComponent(entryId)}`), {
+        method: "DELETE",
+        headers: buildAuthHeaders(token),
+      });
+
+      const data = (await response.json().catch(() => null)) as JournalHistoryResponse | null;
+      if (!response.ok) {
+        throw new Error(data?.message ?? data?.detail ?? "Failed to delete journal entry.");
+      }
+
+      setHistoryData((previous) => previous.filter((entry) => entry.id !== entryId));
+    } catch (apiError) {
+      setHistoryError(apiError instanceof Error ? apiError.message : "Failed to delete journal entry.");
+    } finally {
+      setDeletingEntryId(null);
     }
   }
 
@@ -262,10 +295,6 @@ export default function Journal() {
                   <input value={personaConfidence} onChange={(event) => setPersonaConfidence(event.target.value)} />
                 </label>
                 <label>
-                  Stress level (0-10)
-                  <input value={stressLevel} onChange={(event) => setStressLevel(event.target.value)} />
-                </label>
-                <label>
                   Burden themes (comma-separated)
                   <input value={burdenThemes} onChange={(event) => setBurdenThemes(event.target.value)} />
                 </label>
@@ -296,7 +325,6 @@ export default function Journal() {
                 <div className={styles.resultCard}>
                   <p><strong>id:</strong> {textResult.id ?? "-"}</p>
                   <p><strong>persona:</strong> {textResult.assigned_persona ?? "-"}</p>
-                  <p><strong>stress_level:</strong> {textResult.stress_level ?? "-"}</p>
                   <p><strong>crisis_detected:</strong> {String(textResult.crisis_detected ?? false)}</p>
                   <p><strong>created_at:</strong> {textResult.created_at ?? "-"}</p>
                 </div>
@@ -325,9 +353,17 @@ export default function Journal() {
                 <ul className={styles.historyList}>
                   {historyData.map((entry) => (
                     <li key={entry.id}>
-                      <p><strong>{entry.input_type.toUpperCase()}</strong> • {entry.assigned_persona} • stress {entry.stress_level}</p>
-                      <p>themes: {entry.burden_themes.join(", ") || "none"}</p>
+                      <p><strong>{(entry.input_type ?? "audio").toUpperCase()}</strong> • {entry.assigned_persona}</p>
+                      <p>themes: {entry.burden_themes?.join(", ") || "none"}</p>
                       <p>crisis: {String(entry.crisis_detected)} • {new Date(entry.created_at).toLocaleString()}</p>
+                      <button
+                        type="button"
+                        className={styles.deleteBtn}
+                        onClick={() => void handleDeleteHistoryEntry(entry.id)}
+                        disabled={deletingEntryId === entry.id}
+                      >
+                        {deletingEntryId === entry.id ? "Deleting..." : "Delete"}
+                      </button>
                     </li>
                   ))}
                 </ul>

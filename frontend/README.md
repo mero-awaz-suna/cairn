@@ -1,61 +1,124 @@
 # Cairn Frontend
 
-Frontend app for Cairn built with Next.js 16 (App Router).
+Simple setup guide for the Cairn frontend (Next.js App Router).
 
-## Prerequisites
+## 1. What this frontend uses
+
+Runtime dependencies:
+
+- next `16.2.1`
+- react `19.2.4`
+- react-dom `19.2.4`
+
+Dev dependencies:
+
+- typescript `^5`
+- tailwindcss `^4`
+- @tailwindcss/postcss `^4`
+- @types/node `^20`
+- @types/react `^19`
+- @types/react-dom `^19`
+- babel-plugin-react-compiler `1.0.0`
+
+You do not need to install these one by one. `npm install` will install everything from `package.json`.
+
+## 2. Prerequisites
 
 - Node.js 20+
 - npm
-- A running backend API (default: `http://127.0.0.1:8000`)
+- Backend API running (default expected: `http://127.0.0.1:8000`)
 
-## Environment Setup
+## 3. Install project dependencies
 
-1. Create a local env file from the example:
-
-```bash
-cp .env.example .env.local
-```
-
-On Windows PowerShell:
-
-```powershell
-Copy-Item .env.example .env.local
-```
-
-2. Update values in `.env.local` if needed:
-
-```env
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Install Dependencies
+From this `frontend` folder:
 
 ```bash
 npm install
 ```
 
-## Run in Development
+## 4. Create environment file (`.env.local`)
+
+Create a file named `.env.local` in the `frontend` root.
+
+### Option A: Local machine (recommended for development)
+
+```env
+# URL used by frontend code
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
+
+# URL used by Next.js proxy route on server side
+API_BASE_URL=http://127.0.0.1:8000
+```
+
+### Option B: LAN/mobile testing
+
+Use your backend machine LAN IP:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://192.168.1.74:8000
+API_BASE_URL=http://192.168.1.74:8000
+```
+
+### Option C: Production-style values
+
+```env
+NEXT_PUBLIC_API_BASE_URL=https://api.your-domain.com
+API_BASE_URL=https://api.your-domain.com
+```
+
+## 5. Start development server
 
 ```bash
 npm run dev
 ```
 
-App URL: [http://localhost:3000](http://localhost:3000)
+Frontend will run at:
 
-## Build and Run Production
+- `http://localhost:3000`
+
+## 6. Build and run production locally
 
 ```bash
 npm run build
 npm run start
 ```
 
-## Available Scripts
+## 7. Scripts you can use
 
-- `npm run dev`: Start development server
-- `npm run build`: Create production build
-- `npm run start`: Start production server
+- `npm run dev` -> start dev server
+- `npm run build` -> create production build
+- `npm run start` -> run built app
 
-## Notes
+## 8. How API calls work in this frontend
 
-- Auth requests use the API base URL from `NEXT_PUBLIC_API_BASE_URL`.
-- Register and login flows expect backend auth endpoints under `/auth/*`.
+This app uses a Next.js proxy route:
+
+- Browser requests go to `/api/...`
+- Proxy forwards to backend (`API_BASE_URL`)
+
+So in development, browser avoids direct cross-origin calls to backend and uses same-origin `/api` first.
+
+## 9. Quick checklist (in order)
+
+1. Start backend API on port `8000` (or your chosen port).
+2. Create `.env.local` with correct `NEXT_PUBLIC_API_BASE_URL` and `API_BASE_URL`.
+3. Run `npm install`.
+4. Run `npm run dev`.
+5. Open `http://localhost:3000`.
+
+## 10. Common issues
+
+### `Failed to fetch`
+
+- Check backend is running and reachable.
+- Verify `.env.local` URLs are correct.
+- Restart frontend after changing env values.
+
+### Works on desktop but not on phone
+
+- Use LAN IP values in `.env.local` (not `127.0.0.1` if phone must reach backend directly).
+- Ensure backend CORS and firewall allow your phone.
+
+### Auth seems broken after env change
+
+- Clear browser storage/cookies and log in again.

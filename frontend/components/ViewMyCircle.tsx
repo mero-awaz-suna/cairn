@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
 import { buildApiUrl } from "@/lib/api-base";
 import styles from "./ViewMyCircle.module.css";
@@ -31,10 +31,14 @@ type CircleResponse = {
 };
 
 export default function ViewMyCircle() {
-  const [circleIdInput, setCircleIdInput] = useState("");
+  const [circleId, setCircleId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLeavingCircle, setIsLeavingCircle] = useState(false);
+  const [isEnteringChat, setIsEnteringChat] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [error, setError] = useState("");
   const [circleData, setCircleData] = useState<CircleResponse | null>(null);
+  const [leaveMessage, setLeaveMessage] = useState("");
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -43,7 +47,10 @@ export default function ViewMyCircle() {
 
     const storedCircleId = window.localStorage.getItem(LAST_CIRCLE_ID_STORAGE_KEY);
     if (storedCircleId) {
-      setCircleIdInput(storedCircleId);
+      setCircleId(storedCircleId);
+      void loadCircle(storedCircleId);
+    } else {
+      setCircleData(null);
     }
   }, []);
 
@@ -56,7 +63,7 @@ export default function ViewMyCircle() {
   async function loadCircle(circleId: string) {
     const targetCircleId = circleId.trim();
     if (!targetCircleId) {
-      setError("Please enter a circle ID.");
+      setError("No joined circle found yet. Go to Find My Circle first.");
       setCircleData(null);
       return;
     }
@@ -93,43 +100,153 @@ export default function ViewMyCircle() {
     }
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    void loadCircle(circleIdInput);
+  async function handleLeaveCircle() {
+    const targetCircleId = circleId.trim();
+    if (!targetCircleId) {
+      setError("Circle ID is missing.");
+      return;
+    }
+
+    setIsLeavingCircle(true);
+    setError("");
+    setLeaveMessage("");
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(buildApiUrl(`${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}/leave`), {
+        method: "POST",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = (await response.json().catch(() => null)) as { status?: string; message?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(data?.message ?? "Unable to leave this circle right now.");
+      }
+
+      setLeaveMessage("You have successfully left the circle.");
+      setCircleData(null);
+      setCircleId("");
+      setIsLeaveConfirmOpen(false);
+
+      if (typeof window !== "undefined") {
+        window.localStorage.removeItem(LAST_CIRCLE_ID_STORAGE_KEY);
+      }
+    } catch (apiError) {
+      const apiMessage = apiError instanceof Error ? apiError.message : "Unable to leave this circle right now.";
+      setError(apiMessage);
+    } finally {
+      setIsLeavingCircle(false);
+    }
+  }
+
+  async function handleEnterChatRoom() {
+    const targetCircleId = (circleData?.circle?.id ?? circleId).trim();
+    if (!targetCircleId) {
+      setError("Circle ID is missing.");
+      return;
+    }
+
+    setIsEnteringChat(true);
+    setError("");
+
+    try {
+      const token = getStoredToken();
+      if (!token) {
+        throw new Error("Please log in again to enter chat.");
+      }
+
+      const response = await fetch(buildApiUrl(`${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}/chatroom/enter`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = (await response.json().catch(() => null)) as
+        | { message?: string; detail?: string | { reason?: string }; status?: string }
+        | null;
+
+      if (!response.ok) {
+        const detail = data?.detail;
+        const detailMessage = typeof detail === "string" ? detail : detail?.reason;
+        throw new Error(detailMessage ?? data?.message ?? "Unable to enter chat room right now.");
+      }
+
+      window.location.href = `/chat/${encodeURIComponent(targetCircleId)}`;
+    } catch (apiError) {
+      const apiMessage = apiError instanceof Error ? apiError.message : "Unable to enter chat room right now.";
+      setError(apiMessage);
+    } finally {
+      setIsEnteringChat(false);
+    }
   }
 
   return (
     <section className={styles.section}>
       <div className={styles.container}>
         <div className={styles.card}>
-          <h2 className={styles.title}>View My Circle</h2>
-          <p className={styles.sub}>Check your circle details and current member snapshot.</p>
+          <div className={styles.titleRow}>
+            <span className={styles.titleIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" />
+                <path d="M6 18c1.2-2.4 3.4-3.7 6-3.7s4.8 1.3 6 3.7" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+              </svg>
+            </span>
+            <h2 className={styles.title}>View My Circle</h2>
+          </div>
+          <p className={styles.sub}>Your previously joined circle is listed here.</p>
 
-          <form className={styles.formRow} onSubmit={handleSubmit}>
-            <input
-              className={styles.circleInput}
-              type="text"
-              value={circleIdInput}
-              onChange={(event) => setCircleIdInput(event.target.value)}
-              placeholder="Paste circle ID"
-              aria-label="Circle ID"
-              disabled={isLoading}
-            />
-            <button className={styles.loadBtn} type="submit" disabled={isLoading}>
-              {isLoading ? "Loading..." : "Load Circle"}
-            </button>
-          </form>
+          {isLoading ? <p className={styles.muted}>Loading joined circle...</p> : null}
 
           {error ? <p className={styles.error}>{error}</p> : null}
+          {leaveMessage ? <p className={styles.success}>{leaveMessage}</p> : null}
+
+          {circleId && !circleData?.circle && !isLoading && !error && !leaveMessage ? (
+            <div className={styles.infoGrid}>
+              <article className={styles.infoCard}>
+                <h3>Joined Circle</h3>
+                <p><strong>ID:</strong> {circleId}</p>
+                <div className={styles.actionsRow}>
+                  <button type="button" className={styles.actionBtn} onClick={() => void handleEnterChatRoom()} disabled={isEnteringChat}>
+                    {isEnteringChat ? "Entering..." : "Enter Chat Room"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} ${styles.actionDanger}`}
+                    onClick={() => setIsLeaveConfirmOpen(true)}
+                    disabled={isLeavingCircle}
+                  >
+                    {isLeavingCircle ? "Leaving..." : "Leave the Circle"}
+                  </button>
+                </div>
+              </article>
+            </div>
+          ) : null}
 
           {circleData?.circle ? (
             <div className={styles.infoGrid}>
               <article className={styles.infoCard}>
-                <h3>Circle</h3>
-                <p><strong>ID:</strong> {circleData.circle.id ?? circleIdInput}</p>
+                <h3>Joined Circle</h3>
+                <p><strong>ID:</strong> {circleData.circle.id ?? circleId}</p>
                 <p><strong>Status:</strong> {circleData.circle.status ?? "unknown"}</p>
                 <p><strong>Primary burden:</strong> {circleData.circle.primary_burden_tag ?? "not set"}</p>
                 <p><strong>Facilitator state keys:</strong> {facilitatorStateKeyCount}</p>
+                <div className={styles.actionsRow}>
+                  <button type="button" className={styles.actionBtn} onClick={() => void handleEnterChatRoom()} disabled={isEnteringChat}>
+                    {isEnteringChat ? "Entering..." : "Enter Chat Room"}
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.actionBtn} ${styles.actionDanger}`}
+                    onClick={() => setIsLeaveConfirmOpen(true)}
+                    disabled={isLeavingCircle}
+                  >
+                    {isLeavingCircle ? "Leaving..." : "Leave the Circle"}
+                  </button>
+                </div>
               </article>
 
               <article className={styles.infoCard}>
@@ -153,6 +270,46 @@ export default function ViewMyCircle() {
           ) : null}
         </div>
       </div>
+
+      {isLeaveConfirmOpen ? (
+        <div
+          className={styles.modalBackdrop}
+          onClick={() => {
+            if (!isLeavingCircle) {
+              setIsLeaveConfirmOpen(false);
+            }
+          }}
+        >
+          <div
+            className={styles.modalCard}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Leave circle confirmation"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 className={styles.modalTitle}>Leave this circle?</h3>
+            <p className={styles.modalText}>You can join another circle later, but you will exit this one now.</p>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalCancelBtn}
+                onClick={() => setIsLeaveConfirmOpen(false)}
+                disabled={isLeavingCircle}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.modalConfirmBtn}
+                onClick={() => void handleLeaveCircle()}
+                disabled={isLeavingCircle}
+              >
+                {isLeavingCircle ? "Leaving..." : "Leave Circle"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

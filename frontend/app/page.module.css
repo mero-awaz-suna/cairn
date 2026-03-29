@@ -1,6 +1,6 @@
 .main {
   min-height: 100svh;
-  background: var(--warm-cream);
+  background: linear-gradient(180deg, #f4eee6 0%, #efe6db 100%);
 }
 
 .content {
@@ -57,8 +57,8 @@
     align-items: center;
     gap: 0;
     border-radius: 999px;
-    border: 1px solid rgba(245, 240, 234, 0.24);
-    background: rgba(12, 24, 27, 0.56);
+    border: 1px solid rgba(255, 249, 242, 0.28);
+    background: rgba(56, 47, 40, 0.54);
     padding: 8px 12px;
     backdrop-filter: blur(8px) saturate(120%);
     -webkit-backdrop-filter: blur(8px) saturate(120%);
