@@ -9,14 +9,14 @@ export default async function Home() {
   } = await supabase.auth.getUser();
 
   if (user) {
-    // Check if user has completed onboarding
+    // Check if user has completed onboarding (consented = completed)
     const { data: profile } = await supabase
       .from("users")
-      .select("academic_stage")
+      .select("consented_to_terms_at")
       .eq("supabase_auth_id", user.id)
       .single();
 
-    if (!profile?.academic_stage) {
+    if (!profile || !profile.consented_to_terms_at) {
       redirect("/onboarding");
     }
 
