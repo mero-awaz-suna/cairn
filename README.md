@@ -37,6 +37,7 @@ Then edit `.env` and set your real values:
 - `JWT_SECRET`
 - `JWT_ALGORITHM`
 - `JWT_EXPIRE_MINUTES`
+- `GROQ_API_KEY` (required for `/journal/audio` transcription)
 
 Optional:
 

@@ -1,0 +1,171 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.deck{font-family:var(--font-sans);max-width:680px}
+.slide{padding:2rem 2rem 1.5rem;border-bottom:0.5px solid var(--color-border-tertiary);min-height:220px;display:flex;flex-direction:column;justify-content:center}
+.slide:last-child{border-bottom:none}
+.tag{display:inline-block;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary);margin-bottom:1rem}
+.slide h1{font-size:26px;font-weight:500;color:var(--color-text-primary);line-height:1.3;margin-bottom:.75rem}
+.slide h2{font-size:20px;font-weight:500;color:var(--color-text-primary);line-height:1.4;margin-bottom:.75rem}
+.slide p{font-size:15px;color:var(--color-text-secondary);line-height:1.75;margin-bottom:.5rem}
+.slide p strong{font-weight:500;color:var(--color-text-primary)}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:1rem}
+.card{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:1rem;border:0.5px solid var(--color-border-tertiary)}
+.card .label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.4rem}
+.card p{font-size:13px;color:var(--color-text-secondary);line-height:1.6;margin:0}
+.red{color:#A32D2D}.amber{color:#854F0B}.teal{color:#0F6E56}.purple{color:#534AB7}.coral{color:#993C1D}.green{color:#3B6D11}
+.steps{display:flex;flex-direction:column;gap:12px;margin-top:1rem}
+.step{display:flex;gap:14px;align-items:flex-start}
+.step-num{min-width:28px;height:28px;border-radius:50%;background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;color:var(--color-text-secondary);flex-shrink:0;margin-top:2px}
+.step-text{font-size:14px;color:var(--color-text-secondary);line-height:1.65}
+.step-text strong{font-weight:500;color:var(--color-text-primary)}
+.group-row{display:flex;gap:10px;margin-top:1rem;align-items:stretch}
+.member{flex:1;border-radius:var(--border-radius-md);padding:.75rem;border:0.5px solid var(--color-border-tertiary);text-align:center}
+.member .stage{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem}
+.member .desc{font-size:12px;color:var(--color-text-secondary);line-height:1.5}
+.m-crisis{background:#FCEBEB;border-color:#F09595}.m-crisis .stage{color:#A32D2D}
+.m-mid{background:#FAEEDA;border-color:#FAC775}.m-mid .stage{color:#854F0B}
+.m-stable{background:#E1F5EE;border-color:#9FE1CB}.m-stable .stage{color:#0F6E56}
+.m-div{background:#F1EFE8;border-color:#D3D1C7}.m-div .stage{color:#5F5E5A}
+.quote{border-left:3px solid var(--color-border-secondary);padding:.75rem 1rem;background:var(--color-background-secondary);border-radius:0 var(--border-radius-md) var(--border-radius-md) 0;margin:.75rem 0;font-size:14px;color:var(--color-text-secondary);line-height:1.7;font-style:italic}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:1rem}
+.pill{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:20px;margin:3px 3px 3px 0}
+.pill-p{background:#EEEDFE;color:#534AB7}
+.pill-t{background:#E1F5EE;color:#0F6E56}
+.pill-a{background:#FAEEDA;color:#854F0B}
+.divider-label{text-align:center;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-tertiary);padding:1rem 0 0;font-weight:500}
+.feature-new{background:var(--color-background-info);color:var(--color-text-info);font-size:11px;font-weight:500;padding:2px 8px;border-radius:4px;display:inline-block;margin-left:8px;vertical-align:middle}
+</style>
+
+<div class="deck">
+
+<div class="slide" style="min-height:160px">
+  <span class="tag">The problem</span>
+  <h1>When you're struggling, you're alone at the worst possible time.</h1>
+  <p>Career pressure. Burnout. Anxiety. These hit students and professionals every day — but talking about it still feels like a weakness. And even when people want help, they don't know where to turn.</p>
+</div>
+
+<div class="slide">
+  <span class="tag">The gap in existing solutions</span>
+  <h2>Therapy is expensive. Hotlines feel extreme. Support forums are cold and full of strangers.</h2>
+  <p>Most people don't need a diagnosis. They need to feel <strong>heard by someone who genuinely gets it</strong> — someone who's been in the same storm and found their way out.</p>
+  <div class="quote">"I don't need a doctor. I just need to know someone else has felt this way too — and survived it."</div>
+</div>
+
+<div class="slide">
+  <span class="tag">Introducing Cairn</span>
+  <h1>A voice journal that knows when you need people — and finds exactly the right ones.</h1>
+  <p><strong>Cairn</strong> is named after the stone markers hikers leave on mountains — signals that say: <em>someone was here before you, and they made it through.</em></p>
+</div>
+
+<div class="slide">
+  <span class="tag">How it works — step by step</span>
+  <h2>Four moments that change everything.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text"><strong>You speak, not type.</strong> Every day, you record a 60-second voice note — how you're feeling, what's on your mind. No prompts, no forms. Just your voice.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text"><strong>Cairn listens and builds your persona.</strong> Over time, it quietly understands your stress level, what kind of challenges you face, and where you are in your recovery journey — your "stage."</div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text"><strong>When you press "I need help," a circle forms.</strong> Within seconds, Cairn finds 4–6 real people — anonymous — who match your context and are available right now. Your group is carefully balanced so it never becomes a spiral.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text"><strong>You leave better than you entered.</strong> When the session ends, you get a personal summary of what helped, and your persona updates — so the next match is even better.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <span class="tag">The science behind the group</span>
+  <h2>We don't group people by pain. We design groups like ecosystems.</h2>
+  <p>Every circle is deliberately balanced — because a room full of people in crisis only spirals deeper. Instead:</p>
+  <div class="group-row">
+    <div class="member m-crisis">
+      <div class="stage">In the storm</div>
+      <div class="desc">1 person — triggered, needs to be heard right now</div>
+    </div>
+    <div class="member m-mid">
+      <div class="stage">Finding ground</div>
+      <div class="desc">1–2 people — still raw, but processing and relatable</div>
+    </div>
+    <div class="member m-stable">
+      <div class="stage">Through it</div>
+      <div class="desc">1 person — recovered, offers real hope, not advice</div>
+    </div>
+    <div class="member m-div">
+      <div class="stage">Different paths</div>
+      <div class="desc">No two members share the same trauma type</div>
+    </div>
+  </div>
+  <p style="margin-top:1rem;font-size:13px">Members are matched on <span class="pill pill-p">region</span><span class="pill pill-p">language</span><span class="pill pill-p">life stage</span><span class="pill pill-a">occupation</span><span class="pill pill-t">stressor type</span> — so conversations feel familiar, not foreign.</p>
+</div>
+
+<div class="slide">
+  <span class="tag">New feature — the memory wall</span>
+  <h2>What if no live group is a perfect match right now? <span class="feature-new">New</span></h2>
+  <p>You press "I need help." Cairn finds you the <strong>most relatable live circle available</strong> and puts you in it immediately. But it also shows you something else alongside it:</p>
+  <div class="two-col">
+    <div class="card">
+      <div class="label teal">Your live circle</div>
+      <p>The best available match right now. Real people, online, ready to talk. Anonymous and balanced.</p>
+    </div>
+    <div class="card">
+      <div class="label purple">Echoes from past circles</div>
+      <p>AI-curated summaries of past sessions from people who faced what you're facing. Distilled to positivity only — what helped, what shifted, what gave hope. No raw pain, no trauma details.</p>
+    </div>
+  </div>
+  <p style="margin-top:1rem;font-size:13px;color:var(--color-text-secondary)">So even at 3am when few people are online, you're never truly alone. You have a live group <em>and</em> the collected wisdom of every circle that came before.</p>
+</div>
+
+<div class="slide">
+  <span class="tag">What makes this different</span>
+  <h2>Three things nobody else does.</h2>
+  <div class="cards">
+    <div class="card">
+      <div class="label teal">Persona-driven matching</div>
+      <p>Not keywords or mood tags — a living model of who you are, built from your voice over days and weeks.</p>
+    </div>
+    <div class="card">
+      <div class="label amber">Engineered hope</div>
+      <p>The group composition guarantees someone in the room has been where you are — and found the other side.</p>
+    </div>
+    <div class="card">
+      <div class="label purple">The memory wall</div>
+      <p>Past sessions don't disappear. Their positive essence lives on and becomes support for future strangers.</p>
+    </div>
+  </div>
+</div>
+
+<div class="slide">
+  <span class="tag">Safety — built in, not bolted on</span>
+  <h2>Anonymous by default. Safe by design.</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="font-size:10px">A</div>
+      <div class="step-text"><strong>No permanent identity.</strong> Groups dissolve after every session. Nothing is stored about who said what.</div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:10px">B</div>
+      <div class="step-text"><strong>AI circuit breaker.</strong> If sentiment turns harmful, the AI facilitator redirects the conversation — or surfaces a crisis helpline immediately.</div>
+    </div>
+    <div class="step">
+      <div class="step-num" style="font-size:10px">C</div>
+      <div class="step-text"><strong>Positive-only memory wall.</strong> Past session summaries are filtered by AI — only insights that helped, nothing that could re-trigger.</div>
+    </div>
+  </div>
+</div>
+
+<div class="slide" style="min-height:160px">
+  <span class="tag">The vision</span>
+  <h1>Mental health support that meets you at the moment you need it — not weeks later.</h1>
+  <p>No waiting lists. No stigma. No commitment. Just a circle of people who get it, exactly when you need them most.</p>
+  <p style="margin-top:.75rem;font-size:13px;color:var(--color-text-tertiary)">Built for students and professionals facing career pressure, burnout, and uncertainty — everywhere.</p>
+</div>
+
+</div>
