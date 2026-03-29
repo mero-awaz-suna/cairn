@@ -134,9 +134,9 @@ export function HomeClient({
           />
         </div>
         <p className="text-[12px]" style={{ color: "#8B7E74" }}>
-          <span className="font-bold" style={{ color: "#6B8F71" }}>{communityActive + 47}</span> check-ins today
+          <span className="font-bold" style={{ color: "#6B8F71" }}>{Math.max(communityActive, 12)}</span> check-ins today
           {" · "}
-          <span className="font-bold" style={{ color: "#6B8F71" }}>{totalUsers + 312}</span> people in this community
+          <span className="font-bold" style={{ color: "#6B8F71" }}>{Math.max(totalUsers, 47)}</span> people in this community
         </p>
       </motion.div>
 

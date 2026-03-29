@@ -208,7 +208,7 @@ export default function RecordPage() {
     } else {
       setResult({
         ...res.entry,
-        community_count: Math.floor(Math.random() * 200) + 100,
+        community_count: 0,
       });
     }
     setPhase("result");
