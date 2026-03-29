@@ -74,90 +74,43 @@ export async function submitJournalEntry(formData: FormData) {
 
   if (!text?.trim()) return { error: "No text provided" };
 
-  // ── Call FastAPI backend for persona analysis ──
-  let backendResult: {
-    stage: string;
-    stress_score: number;
-    stage_confidence: number;
-    stressor_breakdown: Record<string, number>;
-    crisis_flag: boolean;
-    crisis_reason: string | null;
-    is_improving: boolean;
-    entry_count: number;
-  } | null = null;
+  // ── AI Persona Analysis (Groq LLM — culturally-aware) ──
+  // Always use client-side LLM for recognition messages (richer, culturally
+  // specific). Backend pipeline runs mocked extractors — fine for vector
+  // tracking but produces generic messages.
+  const { processJournalEntry } = await import("@/lib/ai/persona-engine");
+  const { count: communityCount } = await supabase
+    .from("users")
+    .select("*", { count: "exact", head: true })
+    .eq("is_suspended", false);
+  const aiResult = await processJournalEntry(text, communityCount || 42);
 
+  const persona = aiResult.persona;
+  const stressLevel = aiResult.stress_level;
+  const personaConfidence = aiResult.persona_confidence;
+  const recognitionMessage = aiResult.recognition_message;
+  const microIntervention = aiResult.micro_intervention;
+  const burdenThemes = aiResult.burden_themes;
+
+  // Fire-and-forget: also update backend persona vectors (non-blocking)
   if (token) {
-    try {
-      // Get entry count for day_number
-      const { count } = await supabase
-        .from("journal_entries")
-        .select("*", { count: "exact", head: true })
-        .eq("user_id", profileId);
-
-      const res = await fetch(`${API_URL}/persona/submit`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          transcript: text,
-          audio_path: audioStoragePath || "text-only",
-          day_number: (count || 0) + 1,
-        }),
-      });
-
-      if (res.ok) {
-        backendResult = await res.json();
-      }
-    } catch (err) {
-      console.warn("[Journal] Backend persona call failed, falling back to heuristics:", err);
-    }
-  }
-
-  // ── Map backend result to our schema (or fall back to heuristics) ──
-  const STAGE_MAP: Record<string, string> = {
-    "In the storm": "storm",
-    "Finding ground": "ground",
-    "Through it": "through_it",
-  };
-
-  let persona: string;
-  let stressLevel: number;
-  let personaConfidence: number;
-  let recognitionMessage: string;
-  let microIntervention: string;
-  let burdenThemes: string[];
-
-  if (backendResult) {
-    persona = STAGE_MAP[backendResult.stage] || "ground";
-    stressLevel = Math.round(backendResult.stress_score * 10);
-    personaConfidence = backendResult.stage_confidence;
-    burdenThemes = Object.entries(backendResult.stressor_breakdown)
-      .filter(([, v]) => v > 0.15)
-      .map(([k]) => k);
-    recognitionMessage = backendResult.crisis_flag
-      ? "We see you. This is heavy, and you don't have to carry it alone."
-      : backendResult.is_improving
-        ? "You're moving through this. That takes real strength."
-        : "Just showing up here takes courage. We see you.";
-    microIntervention = backendResult.crisis_flag
-      ? "Consider reaching out to someone you trust right now."
-      : "Take three slow breaths. You've already done something brave by being here.";
-  } else {
-    // Heuristic fallback (same as before)
-    const { processJournalEntry } = await import("@/lib/ai/persona-engine");
-    const { count: communityCount } = await supabase
-      .from("users")
+    const { count } = await supabase
+      .from("journal_entries")
       .select("*", { count: "exact", head: true })
-      .eq("is_suspended", false);
-    const aiResult = await processJournalEntry(text, communityCount || 42);
-    persona = aiResult.persona;
-    stressLevel = aiResult.stress_level;
-    personaConfidence = aiResult.persona_confidence;
-    recognitionMessage = aiResult.recognition_message;
-    microIntervention = aiResult.micro_intervention;
-    burdenThemes = aiResult.burden_themes;
+      .eq("user_id", profileId);
+
+    fetch(`${API_URL}/persona/submit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        transcript: text,
+        audio_path: audioStoragePath || "text-only",
+        day_number: (count || 0) + 1,
+      }),
+    }).catch(() => {}); // Non-blocking — don't wait for this
   }
 
   // ── Insert journal entry (frontend still owns this write) ──
@@ -174,7 +127,7 @@ export async function submitJournalEntry(formData: FormData) {
       burden_themes: burdenThemes,
       recognition_message: recognitionMessage,
       micro_intervention: microIntervention,
-      ai_model_used: backendResult ? "gemini-persona-pipeline" : "heuristic-v1",
+      ai_model_used: "groq-persona-engine",
       ai_processing_ms: Date.now() - startTime,
       transcription_ms: transcriptionMs,
     })
