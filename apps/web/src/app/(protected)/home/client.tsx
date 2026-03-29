@@ -267,22 +267,26 @@ export function HomeClient({
                   : "bg-[rgba(90,143,212,0.1)]";
 
             return (
-              <motion.div
-                key={entry.id}
-                variants={fadeUp}
-                whileHover={{ x: 3 }}
-                className="mx-6 bg-white rounded-xl px-4 py-[14px] flex items-center gap-3 shadow-[0_1px_4px_rgba(44,40,37,0.03)] border border-[#E8DFD3]/40 cursor-pointer"
-              >
-                <div className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center text-[17px] flex-shrink-0 ${moodBg}`}>
-                  {emoji}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-[14px] font-semibold text-[#2C2825] truncate">{label}</h4>
-                  <p className="text-[12px] text-[#8B7E74]">
-                    {getRelativeTime(entry.created_at)} · Stress: {stressLabel}
-                  </p>
-                </div>
-              </motion.div>
+              <Link key={entry.id} href="/record">
+                <motion.div
+                  variants={fadeUp}
+                  whileHover={{ x: 3 }}
+                  className="mx-6 bg-white rounded-xl px-4 py-[14px] flex items-center gap-3 shadow-[0_1px_4px_rgba(44,40,37,0.03)] border border-[#E8DFD3]/40 cursor-pointer"
+                >
+                  <div className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center text-[17px] flex-shrink-0 ${moodBg}`}>
+                    {emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-[14px] font-semibold text-[#2C2825] truncate">{label}</h4>
+                    <p className="text-[12px] text-[#8B7E74]">
+                      {getRelativeTime(entry.created_at)} · Stress: {stressLabel}
+                    </p>
+                  </div>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9BFB2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0">
+                    <path d="m9 18 6-6-6-6" />
+                  </svg>
+                </motion.div>
+              </Link>
             );
           })}
         </div>

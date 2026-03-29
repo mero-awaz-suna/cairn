@@ -105,18 +105,19 @@ export default async function ProfilePage() {
         {/* Stats Row */}
         <div className="grid grid-cols-3 gap-[10px] mb-4">
           {[
-            { num: profile.journal_streak, label: "Day streak" },
-            { num: profile.circles_joined, label: "Circles" },
-            { num: profile.burdens_dropped, label: "Dropped" },
+            { num: profile.journal_streak, label: "Day streak", href: "/record" },
+            { num: profile.circles_joined, label: "Circles", href: "/circle" },
+            { num: profile.burdens_dropped, label: "Dropped", href: "/drop" },
           ].map((stat) => (
-            <div
+            <a
               key={stat.label}
-              className="bg-white rounded-[10px] py-4 px-3 text-center"
+              href={stat.href}
+              className="bg-white rounded-[10px] py-4 px-3 text-center transition-shadow duration-200 hover:shadow-[0_4px_20px_rgba(44,40,37,0.1)]"
               style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}
             >
               <div className="font-display text-[24px]" style={{ color: "#2C2825" }}>{stat.num}</div>
               <div className="text-[11px] font-medium mt-[2px]" style={{ color: "#8B7E74" }}>{stat.label}</div>
-            </div>
+            </a>
           ))}
         </div>
 
@@ -250,6 +251,10 @@ export default async function ProfilePage() {
               ? `${profile.circles_joined} circle${profile.circles_joined > 1 ? "s" : ""}. You've shown up for others — and they've shown up for you.`
               : "You haven't been in a circle yet. The center button will find you the right one."}
           </p>
+          <a href="/circle" className="inline-flex items-center gap-1 mt-3 text-[12px] font-semibold" style={{ color: "#6B8F71" }}>
+            Find a circle
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
+          </a>
         </div>
 
         {/* Sign out */}

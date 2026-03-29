@@ -13,6 +13,7 @@ const CIRCLE_MEMBERS = [
   { alias: "Steady Peak", stage: "Finding Ground", color: "#8FB996", emoji: "\u{1F331}" },
   { alias: "Open Sky", stage: "Finding Ground", color: "#5A8FD4", emoji: "\u{1F331}" },
   { alias: "Still Water", stage: "Through It", color: "#6B8F71", emoji: "\u{1F33F}" },
+  { alias: "You", stage: "Finding Ground", color: "#8FB996", emoji: "\u{1F331}" },
 ];
 
 const SEARCH_MESSAGES = [
@@ -60,6 +61,7 @@ export default function CirclePage() {
   const [sessionTime, setSessionTime] = useState(0);
   const [liveCircleId, setLiveCircleId] = useState<string | null>(null);
   const [facilitatorActive, setFacilitatorActive] = useState(false);
+  const [chatInput, setChatInput] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const facilitatorIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -303,14 +305,38 @@ export default function CirclePage() {
 
             {/* Input area */}
             <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(255,255,255,0.06)", backgroundColor: "rgba(0,0,0,0.2)" }}>
-              <div className="flex items-center gap-3">
-                <div className="flex-1 px-4 py-2.5 rounded-full text-[13px]" style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#8B7E74" }}>
-                  Share what feels right...
-                </div>
-                <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#6B8F71" }}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /></svg>
-                </div>
-              </div>
+              <form
+                className="flex items-center gap-3"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!chatInput.trim()) return;
+                  setVisibleMsgs((prev) => [...prev, {
+                    sender: "You",
+                    type: "member" as const,
+                    text: chatInput,
+                    delay: 0,
+                  }]);
+                  setChatInput("");
+                }}
+              >
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  placeholder="Share what feels right..."
+                  className="flex-1 px-4 py-2.5 rounded-full text-[13px] bg-transparent focus:outline-none"
+                  style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#E8DFD3" }}
+                />
+                <button
+                  type="submit"
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 transition-transform active:scale-90"
+                  style={{ backgroundColor: chatInput.trim() ? "#6B8F71" : "rgba(107,143,113,0.3)" }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="m5 12 7-7 7 7" /><path d="M12 19V5" />
+                  </svg>
+                </button>
+              </form>
             </div>
           </motion.div>
         )}
