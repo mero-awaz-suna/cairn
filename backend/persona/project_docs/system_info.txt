@@ -1,0 +1,238 @@
+The full technical picture
+Raw Audio + Transcript
+        ↓
+   Feature Extraction
+   ├── wav2vec2 → 768-dim → project to 64-dim  (acoustic)
+   ├── LLM call → structured scores             (linguistic)
+   └── Demographics + behavioral                (identity)
+        ↓
+   Normalize against user baseline
+        ↓
+   EMA update → Persona Vector
+        ↓
+   Stage Classification
+        ↓
+   Circle Formation (matching + clustering)
+Let me go deep on each of the last three steps.
+
+1. The Persona Vector — what it actually looks like
+After feature extraction and normalization, every user has a single persona vector that's a concatenation of three blocks, kept structurally separate even though they're stored together:
+persona_vector = [
+    acoustic_state    (64 dims)   # wav2vec2 projection, EMA-updated
+    linguistic_state  (16 dims)   # LLM-extracted scores, EMA-updated  
+    identity          (16 dims)   # demographics, encoded categorically
+    behavioral        (4 dims)    # streak, time patterns, memo length trend
+]
+# total: 100 dims
+The three blocks have very different update rates, which is why keeping them structurally separated matters — you update them independently, not together. Identity almost never changes. Behavioral updates every entry but slowly. Acoustic and linguistic update on every entry with different EMA alphas.
+The linguistic block is 16 dims:
+[valence, arousal, agency, distortion,
+ coping, temporal_orientation,
+ stressor_work, stressor_career, stressor_relationships,
+ stressor_identity, stressor_finances, stressor_health,
+ stressor_isolation, stressor_loss,
+ urgency_signal, help_seeking_signal]
+The identity block uses learned categorical embeddings, collapsed to 16 dims:
+[age_group_emb (4),   # one-hot → 4-dim embedding
+ occupation_emb (4),  # 8 categories → 4-dim
+ industry_emb (4),    # 10 categories → 4-dim
+ language_id (1),     
+ region_cluster (1),
+ living_situation (2)]
+
+2. Stage Classification — the technical approach
+Stage is not stored in the persona vector. It is derived from it. Here's how to do it properly.
+Don't use a single threshold on a single score. Stage is a region in a multi-dimensional space, not a point on a line. The right approach is a learned classifier, but one that's interpretable and adjustable.
+The input to the stage classifier is a slice of the current persona vector — specifically the short-term acoustic and linguistic state, plus trajectory:
+stage_input = [
+    short_valence,        # how positive is their speech right now
+    short_arousal,        # how activated/energized
+    short_agency,         # are they speaking with agency
+    short_distortion,     # cognitive distortion markers present
+    short_coping,         # coping signals present
+    short_stress_acoustic,# wav2vec2-derived stress signal
+    trajectory_valence,   # short - long on valence (direction of change)
+    trajectory_stress,    # short - long on stress
+    trajectory_agency,    # short - long on agency
+    entry_count           # how many entries — confidence weight
+]
+The classifier itself is a simple softmax over three classes. You can start with a rule-based version (no training needed) and replace it with a trained version later.
+Rule-based version:
+stress_score = (1 - valence) * 0.4 + distortion * 0.3 + (1 - agency) * 0.3
+recovery_score = valence * 0.3 + coping * 0.4 + agency * 0.3
+improving = trajectory_valence > 0 and trajectory_stress < 0
+
+if stress_score > 0.65 and not improving:
+    stage = "In the storm"
+    
+elif recovery_score > 0.60 and improving:
+    stage = "Through it"
+    
+else:
+    stage = "Finding ground"
+But there's a subtlety: stage should have inertia. A single bad day shouldn't flip someone from "Through it" to "In the storm." The way to implement this is to run the classifier on the short-term state but gate the stage transition by requiring sustained evidence:
+raw_stage = classify(short_state)
+
+if raw_stage == current_stage:
+    stage_confidence += 0.2   # reinforce current stage
+else:
+    stage_confidence -= 0.15  # erode toward transition
+    
+if stage_confidence <= 0:
+    current_stage = raw_stage
+    stage_confidence = 0.5    # reset with moderate confidence
+    
+stage_confidence = clip(stage_confidence, 0, 1)
+This means a stage transition requires roughly 3–4 consistent entries pointing in the new direction. One bad day won't flip a recovering person back into crisis. This is clinically more accurate and makes the matching more stable.
+When you have real user data, replace the rule-based version with a trained 2-layer MLP trained on user-labeled feedback ("did this stage label feel accurate to you?"). That's your calibration loop.
+
+3. Finding Similar Users — the similarity function
+This is where the vector structure you built pays off. You don't use a single similarity score — you compute block-wise similarity because different blocks matter differently for different purposes.
+pythondef similarity(user_a, user_b):
+    
+    # Identity similarity — must be high for a circle to feel relatable
+    identity_sim = cosine(a.identity, b.identity)
+    
+    # Stressor similarity — share the same domain of pain
+    stressor_sim = cosine(a.stressor_dist, b.stressor_dist)
+    
+    # Acoustic style similarity — similar speech patterns, language rhythm
+    # (useful for cross-cultural comfort, not for stage matching)
+    acoustic_sim = cosine(a.acoustic_long, b.acoustic_long)
+    
+    return {
+        "identity": identity_sim,
+        "stressor": stressor_sim,
+        "acoustic": acoustic_sim
+    }
+```
+
+Notice you deliberately do NOT compute similarity on the state vector for matching purposes. You want state *contrast* (different stages), not state *similarity*. Two people both in crisis matching each other would be the worst possible outcome.
+
+---
+
+## 4. Circle Formation — the full algorithm
+
+This is the most important part and where clustering and matching diverge. Let me be clear about the distinction:
+
+**Clustering** = offline, periodic, analytics and pre-computation.
+**Matching** = online, real-time, happens when someone hits "I need help."
+
+### Offline: Pre-compute match pools with clustering
+
+Every few hours, run k-means (or HDBSCAN, which handles noise better) on the **identity + stressor block only** of all active users. This creates cohorts — groups of people whose life context and stressor domain are similar enough that they could form a circle together.
+```
+cluster_input = concat(identity_vector, stressor_distribution)
+# 16 + 8 = 24 dims — small, fast to cluster
+
+clusters = HDBSCAN(min_cluster_size=10).fit(cluster_input)
+```
+
+HDBSCAN is better than k-means here because:
+- You don't know how many clusters to expect
+- Some users genuinely don't fit any cluster (noise) — k-means forces them in
+- Cluster density varies (some stressor/identity combinations are rare)
+
+Each cluster becomes a pre-computed **match pool** — a list of user IDs who could potentially be in a circle together. When someone requests a circle, you only search within their match pool, not across all users. This makes real-time matching fast even at scale.
+
+### Online: Constrained diversity selection (the actual circle formation)
+
+When user X presses "I need help," the algorithm runs in milliseconds:
+```
+Step 1 — Find the match pool
+pool = get_cluster(user_X)  # pre-computed, fast lookup
+
+Step 2 — Filter by availability
+available = [u for u in pool if u.is_online and u.not_in_session]
+
+Step 3 — Filter by minimum identity and stressor similarity
+candidates = [
+    u for u in available
+    if cosine(X.identity, u.identity) > 0.55
+    and cosine(X.stressor_dist, u.stressor_dist) > 0.40
+]
+
+Step 4 — Stage-aware selection (the key step)
+# You need exactly this composition:
+# 1 person in crisis (or the requesting user IS this person)
+# 1-2 people finding ground
+# 1 person through it
+
+in_storm    = [u for u in candidates if u.stage == "In the storm"]
+finding     = [u for u in candidates if u.stage == "Finding ground"]
+through_it  = [u for u in candidates if u.stage == "Through it"]
+
+Step 5 — Trajectory filter (safety gate)
+# Even the "in storm" members shouldn't be on a downward spiral
+# Exclude anyone whose trajectory_stress > 0.3 (getting rapidly worse)
+# — these people need 1:1 crisis support, not a group
+finding  = [u for u in finding  if u.trajectory_stress < 0.3]
+through_it = [u for u in through_it if u.trajectory_stress < 0.1]
+
+Step 6 — Score and rank within each stage bucket
+# Among candidates in each bucket, prefer:
+# - higher stressor similarity to X
+# - positive trajectory (improving)
+# - higher entry count (more established persona, more reliable)
+
+def score(u):
+    return (
+        0.5 * cosine(X.stressor_dist, u.stressor_dist) +
+        0.3 * normalize(u.entry_count, max=30) +
+        0.2 * normalize(u.trajectory_recovery, min=-1, max=1)
+    )
+
+Step 7 — Compose the circle
+circle = []
+circle += top_1(in_storm,   key=score)   # or X themselves
+circle += top_2(finding,    key=score)
+circle += top_1(through_it, key=score)
+
+Step 8 — Fallback if not enough people
+if len(through_it) == 0:
+    # Use memory wall echoes as synthetic "through it" presence
+    # This is exactly the feature in your pitch deck
+    circle.append(SyntheticEcho(X.stressor_dist))
+The fallback is architecturally important
+At 3am with few users online, you won't always find all three stage types. Rather than degrading the circle quality, the fallback inserts AI-synthesized echoes from past circles that match the stressor profile. This is what your pitch deck calls the Memory Wall — and now you can see exactly how it integrates into the technical system. It's not a nice-to-have feature, it's a structural fallback that makes the constraint-satisfaction problem always solvable.
+
+5. The full data model for one user
+Putting it all together, here's what you store per user in your database:
+json{
+  "user_id": "...",
+  
+  "persona": {
+    "acoustic_short":    [64 floats],   // EMA α=0.5
+    "acoustic_long":     [64 floats],   // EMA α=0.15
+    "linguistic_short":  [16 floats],   // EMA α=0.5
+    "linguistic_long":   [16 floats],   // EMA α=0.15
+    "identity":          [16 floats],   // rarely changes
+    "behavioral":        [4 floats]     // updates every entry
+  },
+  
+  "derived": {
+    "stage":             "Finding ground",
+    "stage_confidence":  0.72,
+    "trajectory":        [8 floats],    // short - long on key dims
+    "stressor_dist":     [8 floats],    // softmax over stressor types
+    "cluster_id":        "cluster_047"  // pre-computed match pool
+  },
+  
+  "meta": {
+    "entry_count":       14,
+    "last_entry":        "2026-03-28T09:41:00Z",
+    "baseline_mean":     [22 floats],   // for per-user normalization
+    "baseline_std":      [22 floats],
+    "confidence_weight": 0.94           // 1 - exp(-14/5)
+  }
+}
+Everything needed for real-time matching is in derived — fast to query, no computation needed at match time. The heavy computation (wav2vec2 forward pass, LLM extraction, EMA update) all happens asynchronously after each voice memo is submitted, not at match time.
+
+The key insight holding all of this together
+The reason this architecture works is that you've separated what the matching needs into clearly different concerns:
+
+Identity + stressor → defines who belongs in the same pool (clustering)
+Stage + trajectory → defines who belongs in which role (circle composition)
+Similarity scoring → defines who is the best available fit (ranking within pool)
+
+None of these three steps use the same slice of the persona vector. That's intentional. Most matching systems flatten everything into one similarity score and wonder why their recommendations feel wrong. Cairn's groups need to be both relatable and diverse at the same time — and that's only achievable when similarity and contrast are computed on different dimensions.

@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cairn — Circle Chat Test</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&display=swap"
+        rel="stylesheet" />
+    <style>
+        /* ── Tokens ─────────────────────────────────────────── */
+        :root {
+            --bg: #0d0f0e;
+            --surface: #141714;
+            --border: #242824;
+            --muted: #3a3f3a;
+            --subtle: #6b736b;
+            --text: #e8ede8;
+            --text-dim: #8a938a;
+            --accent: #a3c9a8;
+            --accent-dim: #4a7a50;
+            --danger: #c97070;
+            --voice: #c9a870;
+            --system: #7090c9;
+            --radius: 10px;
+            --mono: 'DM Mono', monospace;
+            --serif: 'DM Serif Display', serif;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            height: 100dvh;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            grid-template-rows: 100%;
+            overflow: hidden;
+        }
+
+        /* ── Sidebar ─────────────────────────────────────────── */
+        aside {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            padding: 24px 20px;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        .logo {
+            font-family: var(--serif);
+            font-size: 22px;
+            color: var(--accent);
+            letter-spacing: -0.5px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo span {
+            color: var(--text-dim);
+            font-size: 11px;
+            font-family: var(--mono);
+            display: block;
+            margin-top: 2px;
+        }
+
+        label {
+            display: block;
+            color: var(--subtle);
+            font-size: 10px;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 12px;
+            padding: 9px 11px;
+            outline: none;
+            transition: border-color .15s;
+        }
+
+        input:focus {
+            border-color: var(--accent-dim);
+        }
+
+        input::placeholder {
+            color: var(--muted);
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        button {
+            font-family: var(--mono);
+            font-size: 12px;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            padding: 9px 14px;
+            transition: opacity .15s, transform .1s;
+        }
+
+        button:active {
+            transform: scale(.97);
+        }
+
+        button:disabled {
+            opacity: .35;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #0d1a0f;
+            font-weight: 500;
+            width: 100%;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            width: 100%;
+        }
+
+        /* status badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            padding: 6px 10px;
+            border-radius: var(--radius);
+            background: var(--bg);
+            border: 1px solid var(--border);
+        }
+
+        .badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--muted);
+            flex-shrink: 0;
+        }
+
+        .badge.connected .dot {
+            background: var(--accent);
+            box-shadow: 0 0 6px var(--accent);
+        }
+
+        .badge.connecting .dot {
+            background: var(--voice);
+            box-shadow: 0 0 6px var(--voice);
+            animation: pulse 1s infinite;
+        }
+
+        .badge.error .dot {
+            background: var(--danger);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .3
+            }
+        }
+
+        /* online members list */
+        .members-section {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .members-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .member-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            border-radius: 8px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        .member-chip .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .member-chip.self {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        /* log */
+        .log-section {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .log-box {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            height: 100px;
+            overflow-y: auto;
+            font-size: 11px;
+            color: var(--subtle);
+            line-height: 1.6;
+        }
+
+        .log-box .log-line {
+            border-bottom: 1px solid var(--border);
+            padding: 2px 0;
+        }
+
+        .log-box .log-line.err {
+            color: var(--danger);
+        }
+
+        .log-box .log-line.ok {
+            color: var(--accent);
+        }
+
+        /* ── Main ────────────────────────────────────────────── */
+        main {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* top bar */
+        .topbar {
+            border-bottom: 1px solid var(--border);
+            padding: 14px 22px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        .topbar-title {
+            font-family: var(--serif);
+            font-size: 18px;
+            color: var(--text);
+        }
+
+        .topbar-meta {
+            font-size: 11px;
+            color: var(--subtle);
+            margin-top: 2px;
+        }
+
+        .topbar-right {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        /* messages */
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            scroll-behavior: smooth;
+        }
+
+        /* ── Message bubbles ─────────────────────────────────── */
+        .msg {
+            display: flex;
+            gap: 10px;
+            padding: 6px 0;
+            animation: slideIn .18s ease;
+            max-width: 680px;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .msg.self {
+            flex-direction: row-reverse;
+            align-self: flex-end;
+        }
+
+        .msg.system-msg {
+            justify-content: center;
+        }
+
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            flex-shrink: 0;
+            font-family: var(--serif);
+            color: var(--accent-dim);
+        }
+
+        .msg.self .avatar {
+            background: var(--accent-dim);
+            color: var(--bg);
+            border-color: var(--accent);
+        }
+
+        .bubble-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            max-width: 480px;
+        }
+
+        .msg.self .bubble-wrap {
+            align-items: flex-end;
+        }
+
+        .bubble-meta {
+            font-size: 10px;
+            color: var(--subtle);
+            display: flex;
+            gap: 8px;
+            align-items: baseline;
+        }
+
+        .bubble-meta .alias {
+            color: var(--text-dim);
+            font-weight: 500;
+        }
+
+        .bubble-meta .role {
+            color: var(--muted);
+            font-style: italic;
+        }
+
+        .bubble {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 4px 12px 12px 12px;
+            padding: 10px 13px;
+            line-height: 1.6;
+            color: var(--text);
+            word-break: break-word;
+            font-size: 13px;
+        }
+
+        .msg.self .bubble {
+            background: #1a2e1c;
+            border-color: var(--accent-dim);
+            border-radius: 12px 4px 12px 12px;
+            color: var(--text);
+        }
+
+        /* voice bubble */
+        .bubble.voice {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: #201a10;
+            border-color: #4a3a1a;
+        }
+
+        .msg.self .bubble.voice {
+            background: #1a2010;
+            border-color: #3a4a1a;
+        }
+
+        .voice-label {
+            font-size: 10px;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            color: var(--voice);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .voice-label::before {
+            content: '';
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--voice);
+        }
+
+        audio {
+            width: 240px;
+            height: 28px;
+            accent-color: var(--voice);
+            filter: invert(0);
+        }
+
+        .voice-transcript {
+            font-size: 12px;
+            color: var(--text-dim);
+            font-style: italic;
+            border-top: 1px solid var(--border);
+            padding-top: 6px;
+            margin-top: 2px;
+            line-height: 1.5;
+        }
+
+        /* system message */
+        .system-pill {
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            padding: 4px 14px;
+            font-size: 11px;
+            color: var(--system);
+            text-align: center;
+        }
+
+        /* date divider */
+        .date-divider {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 10px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .1em;
+            margin: 8px 0;
+        }
+
+        .date-divider::before,
+        .date-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* ── Input bar ───────────────────────────────────────── */
+        .input-bar {
+            border-top: 1px solid var(--border);
+            padding: 14px 22px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            flex-shrink: 0;
+            background: var(--surface);
+        }
+
+        #text-input {
+            flex: 1;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 13px;
+            padding: 10px 14px;
+            outline: none;
+            resize: none;
+            min-height: 42px;
+            max-height: 120px;
+            line-height: 1.5;
+            transition: border-color .15s;
+            overflow-y: auto;
+        }
+
+        #text-input:focus {
+            border-color: var(--accent-dim);
+        }
+
+        #text-input::placeholder {
+            color: var(--muted);
+        }
+
+        .icon-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: var(--radius);
+            background: var(--bg);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            font-size: 16px;
+            transition: all .15s;
+        }
+
+        .icon-btn:hover:not(:disabled) {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        .icon-btn.recording {
+            background: #2a1010;
+            border-color: var(--danger);
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        .icon-btn.send {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #0d1a0f;
+        }
+
+        .icon-btn.send:hover {
+            opacity: .85;
+        }
+
+        /* recording timer */
+        .rec-timer {
+            font-size: 11px;
+            color: var(--danger);
+            font-variant-numeric: tabular-nums;
+            display: none;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .rec-timer.active {
+            display: flex;
+        }
+
+        .rec-timer::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        /* empty state */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: var(--muted);
+            font-size: 13px;
+            text-align: center;
+        }
+
+        .empty-state svg {
+            opacity: .2;
+        }
+
+        .empty-icon {
+            font-size: 32px;
+            opacity: .2;
+        }
+
+        /* scrollbar */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--muted);
+            border-radius: 4px;
+        }
+
+        /* toast */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px 18px;
+            font-size: 12px;
+            color: var(--text-dim);
+            opacity: 0;
+            transition: opacity .2s;
+            pointer-events: none;
+            z-index: 100;
+            white-space: nowrap;
+        }
+
+        #toast.show {
+            opacity: 1;
+        }
+
+        #toast.ok {
+            border-color: var(--accent-dim);
+            color: var(--accent);
+        }
+
+        #toast.err {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Sidebar ───────────────────────────────────────────── -->
+    <aside>
+        <div class="logo">
+            cairn
+            <span>circle chat — dev test</span>
+        </div>
+
+        <!-- Connection config -->
+        <div class="field">
+            <label>API Base URL</label>
+            <input id="api-url" type="text" value="http://localhost:8000" placeholder="http://localhost:8000" />
+        </div>
+        <div class="field">
+            <label>Circle ID</label>
+            <input id="circle-id" type="text" placeholder="uuid of the circle" />
+        </div>
+        <div class="field">
+            <label>JWT Token</label>
+            <input id="jwt" type="text" placeholder="paste your JWT here" />
+        </div>
+        <div class="field">
+            <label>Your alias (display only)</label>
+            <input id="my-alias" type="text" placeholder="e.g. Maple" />
+        </div>
+
+        <div id="conn-badge" class="badge">
+            <span class="dot"></span>
+            <span id="conn-label">disconnected</span>
+        </div>
+
+        <button class="btn-primary" id="connect-btn" onclick="connect()">Connect</button>
+        <button class="btn-danger" id="disconnect-btn" onclick="disconnect()" disabled>Disconnect</button>
+
+        <!-- Online members -->
+        <div class="members-section">
+            <label>Online members</label>
+            <div class="members-list" id="members-list">
+                <div style="color:var(--muted);font-size:11px;padding:6px 0;">—</div>
+            </div>
+        </div>
+
+        <!-- Dev log -->
+        <div class="log-section">
+            <label>WS event log</label>
+            <div class="log-box" id="log-box"></div>
+        </div>
+    </aside>
+
+    <!-- ── Main chat ──────────────────────────────────────────── -->
+    <main>
+        <div class="topbar">
+            <div>
+                <div class="topbar-title" id="topbar-title">No circle connected</div>
+                <div class="topbar-meta" id="topbar-meta">Connect to start chatting</div>
+            </div>
+            <div class="topbar-right">
+                <span id="msg-count" style="font-size:11px;color:var(--subtle)"></span>
+            </div>
+        </div>
+
+        <div id="messages">
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">◎</div>
+                <div>Connect to a circle to begin</div>
+                <div style="font-size:11px;color:var(--muted)">Messages will appear here</div>
+            </div>
+        </div>
+
+        <div class="input-bar">
+            <textarea id="text-input" placeholder="Say something to the circle…" rows="1" onkeydown="handleKey(event)"
+                oninput="autoGrow(this)" disabled></textarea>
+            <span class="rec-timer" id="rec-timer">0:00</span>
+            <button class="icon-btn" id="voice-btn" onclick="toggleRecording()" disabled title="Hold to record voice">
+                🎙
+            </button>
+            <button class="icon-btn send" onclick="sendText()" id="send-btn" disabled title="Send (Enter)">
+                ↑
+            </button>
+        </div>
+    </main>
+
+    <div id="toast"></div>
+
+    <script>
+        // ── State ──────────────────────────────────────────────────
+        let ws = null
+        let isConnected = false
+        let isRecording = false
+        let mediaRecorder = null
+        let audioChunks = []
+        let recInterval = null
+        let recSeconds = 0
+        let messageCount = 0
+
+        // ── Helpers ────────────────────────────────────────────────
+        const $ = id => document.getElementById(id)
+
+        function log(text, type = '') {
+            const box = $('log-box')
+            const line = document.createElement('div')
+            line.className = 'log-line' + (type ? ' ' + type : '')
+            const ts = new Date().toLocaleTimeString('en', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })
+            line.textContent = `[${ts}] ${text}`
+            box.appendChild(line)
+            box.scrollTop = box.scrollHeight
+        }
+
+        function toast(msg, type = '') {
+            const t = $('toast')
+            t.textContent = msg
+            t.className = 'show ' + type
+            clearTimeout(t._timer)
+            t._timer = setTimeout(() => { t.className = '' }, 2500)
+        }
+
+        function setStatus(state, label) {
+            const badge = $('conn-badge')
+            badge.className = 'badge ' + state
+            $('conn-label').textContent = label
+        }
+
+        function setInputEnabled(enabled) {
+            $('text-input').disabled = !enabled
+            $('voice-btn').disabled = !enabled
+            $('send-btn').disabled = !enabled
+            $('disconnect-btn').disabled = !enabled
+            $('connect-btn').disabled = enabled
+        }
+
+        function autoGrow(el) {
+            el.style.height = 'auto'
+            el.style.height = Math.min(el.scrollHeight, 120) + 'px'
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault()
+                sendText()
+            }
+        }
+
+        function scrollToBottom() {
+            const msgs = $('messages')
+            msgs.scrollTop = msgs.scrollHeight
+        }
+
+        function initials(alias) {
+            return (alias || '?')[0].toUpperCase()
+        }
+
+        function myAlias() {
+            return $('my-alias').value.trim() || 'Me'
+        }
+
+        function apiBase() {
+            return $('api-url').value.trim().replace(/\/$/, '')
+        }
+
+        function circleId() {
+            return $('circle-id').value.trim()
+        }
+
+        function jwt() {
+            return $('jwt').value.trim()
+        }
+
+        // ── Message rendering ──────────────────────────────────────
+        function appendMessage(data, isSelf = false) {
+            const empty = $('empty-state')
+            if (empty) empty.remove()
+
+            messageCount++
+            $('msg-count').textContent = `${messageCount} msg${messageCount !== 1 ? 's' : ''}`
+
+            const container = $('messages')
+            const alias = data.alias || 'unknown'
+            const role = data.role || ''
+            const ts = data.timestamp
+                ? new Date(data.timestamp).toLocaleTimeString('en', { hour: '2-digit', minute: '2-digit', hour12: false })
+                : ''
+
+            const wrap = document.createElement('div')
+            wrap.className = 'msg' + (isSelf ? ' self' : '')
+
+            const avatar = document.createElement('div')
+            avatar.className = 'avatar'
+            avatar.textContent = initials(alias)
+
+            const bubbleWrap = document.createElement('div')
+            bubbleWrap.className = 'bubble-wrap'
+
+            const meta = document.createElement('div')
+            meta.className = 'bubble-meta'
+            meta.innerHTML = `<span class="alias">${alias}</span>${role ? `<span class="role">${role}</span>` : ''}<span>${ts}</span>`
+
+            const bubble = document.createElement('div')
+
+            if (data.type === 'voice') {
+                bubble.className = 'bubble voice'
+                const label = document.createElement('div')
+                label.className = 'voice-label'
+                label.textContent = 'Voice message'
+                bubble.appendChild(label)
+
+                if (data.audio_url) {
+                    const audio = document.createElement('audio')
+                    audio.controls = true
+                    audio.src = data.audio_url
+                    bubble.appendChild(audio)
+                }
+
+                if (data.transcript) {
+                    const tr = document.createElement('div')
+                    tr.className = 'voice-transcript'
+                    tr.textContent = `"${data.transcript}"`
+                    bubble.appendChild(tr)
+                }
+            } else {
+                bubble.className = 'bubble'
+                bubble.textContent = data.content || ''
+            }
+
+            bubbleWrap.appendChild(meta)
+            bubbleWrap.appendChild(bubble)
+
+            if (isSelf) {
+                wrap.appendChild(bubbleWrap)
+                wrap.appendChild(avatar)
+            } else {
+                wrap.appendChild(avatar)
+                wrap.appendChild(bubbleWrap)
+            }
+
+            container.appendChild(wrap)
+            scrollToBottom()
+        }
+
+        function appendSystem(content, onlineMembers) {
+            const empty = $('empty-state')
+            if (empty) empty.remove()
+
+            const container = $('messages')
+            const wrap = document.createElement('div')
+            wrap.className = 'msg system-msg'
+            const pill = document.createElement('div')
+            pill.className = 'system-pill'
+            pill.textContent = content
+            wrap.appendChild(pill)
+            container.appendChild(wrap)
+            scrollToBottom()
+
+            if (onlineMembers) updateMembers(onlineMembers)
+        }
+
+        function appendHistory(messages, onlineMembers) {
+            if (!messages || messages.length === 0) {
+                appendSystem('No messages yet — start the conversation')
+                if (onlineMembers) updateMembers(onlineMembers)
+                return
+            }
+
+            // Group by date
+            let lastDate = null
+            for (const msg of messages) {
+                const dateStr = msg.created_at
+                    ? new Date(msg.created_at).toLocaleDateString('en', { weekday: 'long', month: 'short', day: 'numeric' })
+                    : null
+
+                if (dateStr && dateStr !== lastDate) {
+                    lastDate = dateStr
+                    const divider = document.createElement('div')
+                    divider.className = 'date-divider'
+                    divider.textContent = dateStr
+                    $('messages').appendChild(divider)
+                }
+
+                const memberData = msg.circle_members || {}
+                const alias = msg.alias || memberData.anonymous_alias || 'unknown'
+                const role = msg.role || memberData.role_label || ''
+                const isSelf = alias.toLowerCase() === myAlias().toLowerCase()
+
+                if (msg.audio_storage_path || msg.type === 'voice') {
+                    appendMessage({ ...msg, type: 'voice', alias, role }, isSelf)
+                } else {
+                    appendMessage({ ...msg, type: 'text', alias, role }, isSelf)
+                }
+            }
+
+            if (onlineMembers) updateMembers(onlineMembers)
+            scrollToBottom()
+        }
+
+        function updateMembers(userIds) {
+            const list = $('members-list')
+            list.innerHTML = ''
+            if (!userIds || userIds.length === 0) {
+                list.innerHTML = '<div style="color:var(--muted);font-size:11px;padding:6px 0;">No one online</div>'
+                return
+            }
+            userIds.forEach(uid => {
+                const chip = document.createElement('div')
+                const label = uid === 'you' ? myAlias() : uid.slice(0, 8) + '…'
+                chip.className = 'member-chip'
+                chip.innerHTML = `<span class="dot"></span>${label}`
+                list.appendChild(chip)
+            })
+        }
+
+        // ── WebSocket ──────────────────────────────────────────────
+        function connect() {
+            const cid = circleId()
+            const token = jwt()
+
+            if (!cid || !token) {
+                toast('Fill in Circle ID and JWT token', 'err')
+                return
+            }
+
+            const wsBase = apiBase().replace(/^http/, 'ws')
+            const url = `${wsBase}/chat/ws/${cid}?token=${token}`
+
+            setStatus('connecting', 'connecting…')
+            log(`Connecting to ${url}`)
+
+            ws = new WebSocket(url)
+
+            ws.onopen = () => {
+                isConnected = true
+                setStatus('connected', 'connected')
+                setInputEnabled(true)
+                $('topbar-title').textContent = `Circle ${cid.slice(0, 8)}…`
+                $('topbar-meta').textContent = `Connected — ${new Date().toLocaleTimeString()}`
+                log('WebSocket connected', 'ok')
+                toast('Connected to circle', 'ok')
+            }
+
+            ws.onmessage = (event) => {
+                let data
+                try { data = JSON.parse(event.data) } catch { return }
+
+                log(`← ${data.type}${data.content ? ': ' + String(data.content).slice(0, 60) : ''}`)
+
+                switch (data.type) {
+                    case 'history':
+                        appendHistory(data.messages, data.online_members)
+                        break
+
+                    case 'text': {
+                        const isSelf = data.alias?.toLowerCase() === myAlias().toLowerCase()
+                        appendMessage(data, isSelf)
+                        break
+                    }
+
+                    case 'voice': {
+                        const isSelf = data.alias?.toLowerCase() === myAlias().toLowerCase()
+                        appendMessage(data, isSelf)
+                        break
+                    }
+
+                    case 'system':
+                        appendSystem(data.content, data.online_members)
+                        log(`system: ${data.content}`)
+                        break
+
+                    case 'pong':
+                        log('pong ← server', 'ok')
+                        break
+
+                    case 'error':
+                        toast(data.content, 'err')
+                        log(`error: ${data.content}`, 'err')
+                        break
+
+                    default:
+                        log(`unknown type: ${data.type}`)
+                }
+            }
+
+            ws.onclose = (e) => {
+                isConnected = false
+                setStatus('', 'disconnected')
+                setInputEnabled(false)
+                $('topbar-meta').textContent = `Disconnected (code ${e.code})`
+                log(`Closed: code=${e.code} reason="${e.reason}"`, e.code === 1000 ? '' : 'err')
+                if (e.code === 4003) toast('Access denied — not an active member', 'err')
+                ws = null
+            }
+
+            ws.onerror = () => {
+                setStatus('error', 'error')
+                log('WebSocket error', 'err')
+                toast('Connection error', 'err')
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close(1000, 'User disconnected')
+                ws = null
+            }
+        }
+
+        // ── Send text ──────────────────────────────────────────────
+        function sendText() {
+            const input = $('text-input')
+            const content = input.value.trim()
+            if (!content || !ws || ws.readyState !== WebSocket.OPEN) return
+
+            ws.send(JSON.stringify({ type: 'text', content }))
+            log(`→ text: ${content.slice(0, 60)}`)
+
+            input.value = ''
+            input.style.height = 'auto'
+        }
+
+        // ── Ping ──────────────────────────────────────────────────
+        function sendPing() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) { toast('Not connected', 'err'); return }
+            ws.send(JSON.stringify({ type: 'ping' }))
+            log('→ ping')
+        }
+
+        // ── Recording ─────────────────────────────────────────────
+        async function toggleRecording() {
+            if (isRecording) {
+                stopRecording()
+            } else {
+                await startRecording()
+            }
+        }
+
+        async function startRecording() {
+            if (!isConnected) { toast('Not connected', 'err'); return }
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+                audioChunks = []
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' })
+
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data)
+                }
+
+                mediaRecorder.onstop = () => {
+                    stream.getTracks().forEach(t => t.stop())
+                    uploadVoice()
+                }
+
+                mediaRecorder.start(100)
+                isRecording = true
+                recSeconds = 0
+
+                $('voice-btn').classList.add('recording')
+                $('voice-btn').title = 'Click to stop'
+                $('voice-btn').textContent = '⏹'
+                $('rec-timer').classList.add('active')
+
+                recInterval = setInterval(() => {
+                    recSeconds++
+                    const m = Math.floor(recSeconds / 60)
+                    const s = String(recSeconds % 60).padStart(2, '0')
+                    $('rec-timer').childNodes[1]
+                        ? ($('rec-timer').lastChild.textContent = `${m}:${s}`)
+                        : null
+                    $('rec-timer').textContent = `${m}:${s}`
+                    if (recSeconds >= 120) stopRecording() // 2 min cap
+                }, 1000)
+
+                log('Recording started')
+            } catch (err) {
+                toast('Microphone access denied', 'err')
+                log(`Mic error: ${err.message}`, 'err')
+            }
+        }
+
+        function stopRecording() {
+            if (!mediaRecorder || !isRecording) return
+            mediaRecorder.stop()
+            isRecording = false
+            clearInterval(recInterval)
+
+            $('voice-btn').classList.remove('recording')
+            $('voice-btn').title = 'Record voice'
+            $('voice-btn').textContent = '🎙'
+            $('rec-timer').classList.remove('active')
+            log('Recording stopped — uploading…')
+        }
+
+        async function uploadVoice() {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' })
+            if (blob.size < 100) { toast('Recording too short', 'err'); return }
+
+            const formData = new FormData()
+            formData.append('audio', blob, 'voice.webm')
+
+            const cid = circleId()
+            const url = `${apiBase()}/chat/voice/${cid}`
+
+            toast('Uploading voice…')
+            log(`Uploading ${(blob.size / 1024).toFixed(1)} KB to ${url}`)
+
+            try {
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${jwt()}` },
+                    body: formData,
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    throw new Error(err.detail || `HTTP ${res.status}`)
+                }
+
+                const data = await res.json()
+                toast('Voice sent ✓', 'ok')
+                log(`Voice sent: id=${data.message_id} transcript="${(data.transcript || '').slice(0, 40)}"`, 'ok')
+            } catch (err) {
+                toast(`Upload failed: ${err.message}`, 'err')
+                log(`Upload error: ${err.message}`, 'err')
+            }
+        }
+
+        // ── Keyboard shortcuts ─────────────────────────────────────
+        document.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault()
+                sendPing()
+            }
+        })
+    </script>
+</body>
+
+</html>

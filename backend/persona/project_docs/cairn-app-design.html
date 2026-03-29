@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cairn — App Design</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Nunito:wght@300;400;500;600;700&family=Caveat:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --stone: #2C2825;
+  --stone-90: rgba(44,40,37,0.9);
+  --warm-cream: #F5F0EA;
+  --sand: #E8DFD3;
+  --sand-light: #F0EAE0;
+  --moss: #6B8F71;
+  --moss-deep: #5A7D60;
+  --moss-light: #8FB996;
+  --moss-glow: rgba(107,143,113,0.15);
+  --moss-soft: rgba(107,143,113,0.08);
+  --ember: #D4845A;
+  --ember-light: #E8A87C;
+  --ember-glow: rgba(212,132,90,0.15);
+  --dusk: #8B7E74;
+  --cloud: #C9BFB2;
+  --cloud-light: #D9D1C6;
+  --white: #FFFFFF;
+  --red-soft: #D45A5A;
+  --blue-soft: #5A8FD4;
+  --phone-w: 375px;
+  --phone-h: 812px;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #1a1816;
+  color: var(--stone);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── PAGE HEADER ── */
+.page-header {
+  text-align: center;
+  padding: 60px 24px 20px;
+  max-width: 700px;
+}
+.page-header h1 {
+  font-family: 'DM Serif Display', serif;
+  color: var(--warm-cream);
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+.page-header p {
+  color: var(--dusk);
+  font-size: 15px;
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+/* ── SCREEN SELECTOR ── */
+.screen-nav {
+  display: flex;
+  gap: 6px;
+  padding: 12px 24px;
+  margin-bottom: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+  max-width: 700px;
+}
+.screen-tab {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--cloud);
+  font-family: 'Nunito', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 8px 16px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.screen-tab:hover {
+  background: rgba(255,255,255,0.1);
+  color: var(--warm-cream);
+}
+.screen-tab.active {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: white;
+}
+
+/* ── PHONE FRAME ── */
+.phone-stage {
+  position: relative;
+  width: var(--phone-w);
+  height: var(--phone-h);
+  margin-bottom: 60px;
+}
+.phone-frame {
+  width: 100%;
+  height: 100%;
+  border-radius: 44px;
+  background: var(--stone);
+  padding: 12px;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.08),
+    0 40px 100px rgba(0,0,0,0.5),
+    inset 0 0 0 1px rgba(255,255,255,0.04);
+  position: relative;
+}
+.phone-notch {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+  height: 28px;
+  background: var(--stone);
+  border-radius: 0 0 18px 18px;
+  z-index: 100;
+}
+.phone-screen {
+  width: 100%;
+  height: 100%;
+  border-radius: 36px;
+  overflow: hidden;
+  position: relative;
+  background: var(--warm-cream);
+}
+
+/* ── SCREEN VIEWS ── */
+.app-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.45s ease, transform 0.45s ease;
+  transform: scale(0.96);
+  overflow-y: auto;
+  overflow-x: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.app-screen::-webkit-scrollbar { display: none; }
+.app-screen.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+/* ── STATUS BAR ── */
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 24px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--stone);
+  flex-shrink: 0;
+  z-index: 50;
+}
+.status-bar.light { color: var(--warm-cream); }
+.status-icons { display: flex; gap: 5px; align-items: center; }
+.status-icons svg { width: 15px; height: 15px; }
+
+/* ── BOTTOM NAV ── */
+.bottom-nav {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 10px 16px 28px;
+  background: linear-gradient(to top, var(--warm-cream) 80%, transparent);
+  z-index: 90;
+}
+.bottom-nav.dark-bg {
+  background: linear-gradient(to top, var(--stone) 80%, transparent);
+}
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item span {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--dusk);
+}
+.nav-item.active span { color: var(--moss); }
+.nav-item.active svg { color: var(--moss); }
+
+/* center help button */
+.nav-help-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(107,143,113,0.4);
+  transition: all 0.3s ease;
+  animation: helpPulse 3s infinite;
+  position: relative;
+}
+.nav-help-btn::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid var(--moss);
+  opacity: 0;
+  animation: helpRipple 3s infinite;
+}
+.nav-help-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 6px 28px rgba(107,143,113,0.5);
+}
+.nav-help-btn svg { width: 24px; height: 24px; color: white; }
+
+@keyframes helpPulse {
+  0%,100% { box-shadow: 0 4px 20px rgba(107,143,113,0.4); }
+  50% { box-shadow: 0 4px 30px rgba(107,143,113,0.6); }
+}
+@keyframes helpRipple {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 1 — HOME / JOURNAL
+   ═══════════════════════════════════════════ */
+.home-screen { background: var(--warm-cream); }
+
+.home-greeting {
+  padding: 8px 24px 0;
+}
+.home-greeting .greeting-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.home-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--moss-glow), var(--ember-glow));
+  border: 2px solid var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+.greeting-text h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 26px;
+  color: var(--stone);
+  line-height: 1.2;
+}
+.greeting-sub {
+  font-size: 14px;
+  color: var(--dusk);
+  font-weight: 400;
+}
+
+/* streak card */
+.streak-card {
+  margin: 16px 24px 0;
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 2px 12px rgba(44,40,37,0.05);
+}
+.streak-flame { font-size: 28px; }
+.streak-info h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--stone);
+}
+.streak-info p {
+  font-size: 12px;
+  color: var(--dusk);
+  font-weight: 400;
+}
+.streak-dots {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+.streak-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--sand);
+}
+.streak-dot.filled { background: var(--moss); }
+
+/* Today's entry prompt */
+.journal-prompt {
+  margin: 20px 24px 0;
+  background: linear-gradient(135deg, var(--moss), var(--moss-deep));
+  border-radius: var(--radius);
+  padding: 24px 20px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+.journal-prompt::after {
+  content: '';
+  position: absolute;
+  top: -20px; right: -20px;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(255,255,255,0.1), transparent 70%);
+  border-radius: 50%;
+}
+.journal-prompt h3 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.journal-prompt p {
+  font-size: 13px;
+  opacity: 0.85;
+  font-weight: 300;
+  margin-bottom: 16px;
+  line-height: 1.5;
+}
+.record-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 100px;
+  padding: 10px 20px;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'Nunito', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+.record-btn:hover { background: rgba(255,255,255,0.3); }
+.record-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #ff6b6b;
+  animation: blink 1.5s infinite;
+}
+@keyframes blink {
+  0%,100% { opacity:1; }
+  50% { opacity:0.3; }
+}
+
+/* past entries */
+.entries-header {
+  padding: 24px 24px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.entries-header h3 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--stone);
+}
+.entries-header a {
+  font-size: 13px;
+  color: var(--moss);
+  text-decoration: none;
+  font-weight: 600;
+}
+.entry-card {
+  margin: 0 24px 10px;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 1px 6px rgba(44,40,37,0.04);
+  transition: all 0.2s;
+}
+.entry-card:hover { transform: translateX(3px); }
+.entry-mood {
+  width: 38px; height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.entry-mood.calm { background: var(--moss-glow); }
+.entry-mood.anxious { background: var(--ember-glow); }
+.entry-mood.low { background: rgba(90,143,212,0.12); }
+.entry-info { flex: 1; }
+.entry-info h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--stone);
+  margin-bottom: 2px;
+}
+.entry-info p {
+  font-size: 12px;
+  color: var(--dusk);
+  font-weight: 400;
+}
+.entry-duration {
+  font-size: 11px;
+  color: var(--cloud);
+  font-weight: 500;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 2 — RECORDING
+   ═══════════════════════════════════════════ */
+.record-screen {
+  background: var(--stone);
+  align-items: center;
+  justify-content: center;
+  padding: 0 32px;
+}
+.record-timer {
+  font-family: 'DM Serif Display', serif;
+  font-size: 56px;
+  color: var(--warm-cream);
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+.record-subtitle {
+  font-size: 14px;
+  color: var(--dusk);
+  font-weight: 300;
+  margin-bottom: 40px;
+}
+.waveform-display {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 60px;
+  margin-bottom: 48px;
+}
+.waveform-display .wbar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--moss);
+  animation: waveAnim 0.7s ease-in-out infinite alternate;
+}
+@keyframes waveAnim {
+  0% { height: 8px; opacity: 0.4; }
+  100% { height: var(--h); opacity: 1; }
+}
+.record-main-btn {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: var(--red-soft);
+  border: 4px solid rgba(255,255,255,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 0 40px rgba(212,90,90,0.3);
+  margin-bottom: 20px;
+  transition: all 0.3s;
+}
+.record-main-btn:hover { transform: scale(1.06); }
+.record-main-btn .stop-icon {
+  width: 24px; height: 24px;
+  border-radius: 4px;
+  background: white;
+}
+.record-hint {
+  font-size: 12px;
+  color: var(--dusk);
+  font-weight: 400;
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 3 — MATCHING / I NEED HELP
+   ═══════════════════════════════════════════ */
+.matching-screen {
+  background: var(--stone);
+  align-items: center;
+  justify-content: center;
+}
+.matching-circles {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin-bottom: 32px;
+}
+.match-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid rgba(107,143,113,0.25);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+}
+.match-ring-1 { width: 80px; height: 80px; animation: matchPulse 2s infinite; }
+.match-ring-2 { width: 130px; height: 130px; animation: matchPulse 2s 0.4s infinite; }
+.match-ring-3 { width: 180px; height: 180px; animation: matchPulse 2s 0.8s infinite; }
+@keyframes matchPulse {
+  0%,100% { opacity:0.3; transform: translate(-50%,-50%) scale(1); }
+  50% { opacity:0.8; transform: translate(-50%,-50%) scale(1.04); }
+}
+.match-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(107,143,113,0.4);
+}
+.match-center svg { width: 20px; height: 20px; color: white; }
+
+/* floating avatars around rings */
+.match-avatar {
+  position: absolute;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  border: 2px solid var(--stone);
+}
+.match-avatar.a1 { top: 8px; left: 50%; transform: translateX(-50%); background: var(--ember); animation: fadeInAvatar 0.8s 0.5s both; }
+.match-avatar.a2 { top: 35%; right: 8px; background: var(--moss-light); animation: fadeInAvatar 0.8s 1s both; }
+.match-avatar.a3 { bottom: 30%; right: 15px; background: var(--blue-soft); animation: fadeInAvatar 0.8s 1.5s both; }
+.match-avatar.a4 { bottom: 8px; left: 50%; transform: translateX(-50%); background: var(--dusk); animation: fadeInAvatar 0.8s 2s both; }
+.match-avatar.a5 { top: 35%; left: 8px; background: var(--ember-light); animation: fadeInAvatar 0.8s 2.5s both; }
+@keyframes fadeInAvatar {
+  from { opacity:0; transform: translateX(-50%) scale(0); }
+  to { opacity:1; transform: translateX(-50%) scale(1); }
+}
+.match-avatar.a2, .match-avatar.a3, .match-avatar.a5 {
+  animation-name: fadeInAvatar2;
+}
+@keyframes fadeInAvatar2 {
+  from { opacity:0; scale: 0; }
+  to { opacity:1; scale: 1; }
+}
+
+.matching-status {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--warm-cream);
+  text-align: center;
+  margin-bottom: 8px;
+}
+.matching-detail {
+  font-size: 13px;
+  color: var(--dusk);
+  text-align: center;
+  font-weight: 300;
+  max-width: 240px;
+}
+.matching-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 24px;
+}
+.match-tag {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 5px 12px;
+  font-size: 11px;
+  color: var(--cloud);
+  font-weight: 500;
+}
+.match-tag.found {
+  border-color: var(--moss);
+  color: var(--moss-light);
+  background: rgba(107,143,113,0.1);
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN 4 — LIVE CIRCLE SESSION
+   ═══════════════════════════════════════════ */
+.session-screen {
+  background: var(--stone);
+}
+.session-header {
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.session-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--moss-light);
+}
+.session-live-badge::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--moss-light);
+  animation: blink 1.5s infinite;
+}
+.session-timer-small {
+  font-size: 13px;
+  color: var(--dusk);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.session-end-btn {
+  font-size: 12px;
+  color: var(--red-soft);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* circle visual */
+.session-circle {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0 16px;
+  position: relative;
+}
+.circle-container {
+  width: 220px;
+  height: 220px;
+  position: relative;
+}
+.circle-member {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.circle-member-avatar {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: white;
+  font-weight: 700;
+  position: relative;
+}
+.circle-member-avatar.speaking {
+  animation: speakPulse 1.2s infinite;
+}
+@keyframes speakPulse {
+  0%,100% { box-shadow: 0 0 0 0 rgba(107,143,113,0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(107,143,113,0); }
+}
+.circle-member-label {
+  font-size: 9px;
+  color: var(--dusk);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.circle-member-label.storm { color: var(--ember); }
+.circle-member-label.ground { color: var(--ember-light); }
+.circle-member-label.through { color: var(--moss-light); }
+.circle-member-label.you-label { color: var(--warm-cream); }
+
+/* member positions in a circle */
+.circle-member:nth-child(1) { top: 0; left: 50%; transform: translateX(-50%); }
+.circle-member:nth-child(2) { top: 25%; right: 0; }
+.circle-member:nth-child(3) { bottom: 25%; right: 0; }
+.circle-member:nth-child(4) { bottom: 0; left: 50%; transform: translateX(-50%); }
+.circle-member:nth-child(5) { bottom: 25%; left: 0; }
+.circle-member:nth-child(6) { top: 25%; left: 0; }
+
+/* AI facilitator */
+.ai-facilitator {
+  margin: 0 24px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.ai-avatar {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--moss-glow);
+  border: 1px solid rgba(107,143,113,0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 12px;
+}
+.ai-msg {
+  font-size: 13px;
+  color: var(--cloud);
+  font-weight: 300;
+  line-height: 1.5;
+}
+.ai-msg strong {
+  color: var(--warm-cream);
+  font-weight: 600;
+}
+
+/* chat transcript */
+.session-chat {
+  padding: 16px 24px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.chat-msg {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.chat-avatar {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: white;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.chat-bubble {
+  background: rgba(255,255,255,0.06);
+  border-radius: 14px 14px 14px 4px;
+  padding: 10px 14px;
+  max-width: 240px;
+}
+.chat-name {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--dusk);
+  margin-bottom: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.chat-text {
+  font-size: 13px;
+  color: var(--cloud-light);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
+/* session input */
+.session-input-area {
+  padding: 12px 24px 32px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.session-input {
+  flex: 1;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 100px;
+  padding: 12px 18px;
+  font-size: 14px;
+  color: var(--cloud);
+  font-family: 'Nunito', sans-serif;
+  outline: none;
+}
+.session-input::placeholder { color: var(--dusk); }
+.session-mic-btn {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.session-mic-btn:hover { background: var(--moss-light); }
+.session-mic-btn svg { width: 18px; height: 18px; color: white; }
+
+/* ═══════════════════════════════════════════
+   SCREEN 5 — MEMORY WALL
+   ═══════════════════════════════════════════ */
+.memory-screen {
+  background: var(--warm-cream);
+}
+.memory-top {
+  padding: 8px 24px 0;
+}
+.memory-top h2 {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--stone);
+  margin-bottom: 4px;
+}
+.memory-top p {
+  font-size: 13px;
+  color: var(--dusk);
+  font-weight: 300;
+}
+
+.memory-filter {
+  display: flex;
+  gap: 8px;
+  padding: 16px 24px;
+  overflow-x: auto;
+}
+.memory-pill {
+  background: var(--white);
+  border: 1px solid var(--sand);
+  border-radius: 100px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dusk);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.memory-pill.active {
+  background: var(--moss);
+  border-color: var(--moss);
+  color: white;
+}
+
+.memory-cards {
+  padding: 0 24px 120px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mem-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: 0 2px 12px rgba(44,40,37,0.05);
+  border-left: 3px solid var(--moss);
+  transition: all 0.3s;
+}
+.mem-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(44,40,37,0.08); }
+.mem-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.mem-card-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--moss);
+  background: var(--moss-glow);
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+.mem-card-date {
+  font-size: 11px;
+  color: var(--cloud);
+  font-weight: 400;
+}
+.mem-card h4 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--stone);
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+.mem-card p {
+  font-size: 13px;
+  color: var(--dusk);
+  font-weight: 300;
+  line-height: 1.6;
+}
+.mem-card-footer {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+}
+.mem-react {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--dusk);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.mem-react:hover { color: var(--moss); }
+
+/* ═══════════════════════════════════════════
+   SCREEN 6 — PROFILE / PERSONA
+   ═══════════════════════════════════════════ */
+.profile-screen {
+  background: var(--warm-cream);
+}
+.profile-header-bg {
+  background: linear-gradient(135deg, var(--moss), var(--moss-deep));
+  padding: 20px 24px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.profile-header-bg::after {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: -20px; right: -20px;
+  height: 60px;
+  background: var(--warm-cream);
+  border-radius: 50% 50% 0 0;
+}
+.profile-avatar-big {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+  border: 3px solid rgba(255,255,255,0.3);
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+}
+.profile-name {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: white;
+  margin-bottom: 2px;
+}
+.profile-sub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.7);
+  font-weight: 300;
+}
+
+.profile-body { padding: 0 24px 120px; position: relative; z-index: 2; }
+
+.persona-card {
+  background: var(--white);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 12px rgba(44,40,37,0.05);
+}
+.persona-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--stone);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.persona-card-title svg { width: 16px; height: 16px; color: var(--moss); }
+
+/* persona meter */
+.persona-meter {
+  margin-bottom: 14px;
+}
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.meter-label span:first-child { color: var(--dusk); font-weight: 500; }
+.meter-label span:last-child { color: var(--moss); font-weight: 600; }
+.meter-track {
+  height: 6px;
+  background: var(--sand-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s ease;
+}
+.meter-fill.moss { background: linear-gradient(90deg, var(--moss-light), var(--moss)); }
+.meter-fill.ember { background: linear-gradient(90deg, var(--ember-light), var(--ember)); }
+
+/* stage badge */
+.stage-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--moss-glow);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+.stage-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--moss);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+.stage-text h4 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--stone);
+}
+.stage-text p {
+  font-size: 12px;
+  color: var(--dusk);
+  font-weight: 400;
+}
+
+/* stats row */
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.p-stat {
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  padding: 16px 12px;
+  text-align: center;
+  box-shadow: 0 2px 12px rgba(44,40,37,0.05);
+}
+.p-stat-num {
+  font-family: 'DM Serif Display', serif;
+  font-size: 24px;
+  color: var(--stone);
+}
+.p-stat-label {
+  font-size: 11px;
+  color: var(--dusk);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE PHONE
+   ═══════════════════════════════════════════ */
+@media (max-width: 420px) {
+  .phone-stage {
+    width: calc(100vw - 16px);
+    height: calc((100vw - 16px) * 2.165);
+  }
+  .screen-nav { padding: 12px 12px; }
+  .page-header { padding: 40px 16px 16px; }
+  .page-header h1 { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>Cairn — App Design</h1>
+  <p>Tap each screen to explore the full user flow</p>
+</div>
+
+<nav class="screen-nav" id="screenNav">
+  <button class="screen-tab active" data-screen="home">Home</button>
+  <button class="screen-tab" data-screen="record">Record</button>
+  <button class="screen-tab" data-screen="matching">I Need Help</button>
+  <button class="screen-tab" data-screen="session">Live Circle</button>
+  <button class="screen-tab" data-screen="memory">Memory Wall</button>
+  <button class="screen-tab" data-screen="profile">Persona</button>
+</nav>
+
+<div class="phone-stage">
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <!-- ═══ SCREEN 1 — HOME ═══ -->
+      <div class="app-screen home-screen active" id="screen-home">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M14 6.5h-1V5a5 5 0 10-10 0v1.5H2a1 1 0 00-1 1V14a1 1 0 001 1h12a1 1 0 001-1V7.5a1 1 0 00-1-1zM5 5a3 3 0 116 0v1.5H5V5z"/></svg>
+          </div>
+        </div>
+
+        <div class="home-greeting">
+          <div class="greeting-top">
+            <div>
+              <h2>Good evening,</h2>
+              <p class="greeting-sub">How are you feeling today?</p>
+            </div>
+            <div class="home-avatar">🌿</div>
+          </div>
+        </div>
+
+        <div class="streak-card">
+          <div class="streak-flame">🔥</div>
+          <div class="streak-info">
+            <h4>7-day streak</h4>
+            <p>You're building a beautiful habit</p>
+          </div>
+          <div class="streak-dots">
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+            <div class="streak-dot filled"></div>
+          </div>
+        </div>
+
+        <div class="journal-prompt">
+          <h3>Today's check-in</h3>
+          <p>Take 60 seconds. No prompts. Just speak what's on your mind.</p>
+          <button class="record-btn" onclick="showScreen('record')">
+            <div class="record-dot"></div>
+            Record voice note
+          </button>
+        </div>
+
+        <div class="entries-header">
+          <h3>Recent entries</h3>
+          <a href="#">See all</a>
+        </div>
+
+        <div class="entry-card">
+          <div class="entry-mood calm">😌</div>
+          <div class="entry-info">
+            <h4>Finding some peace</h4>
+            <p>Yesterday · Stress level: Low</p>
+          </div>
+          <span class="entry-duration">0:52</span>
+        </div>
+        <div class="entry-card">
+          <div class="entry-mood anxious">😰</div>
+          <div class="entry-info">
+            <h4>Deadline pressure</h4>
+            <p>2 days ago · Stress level: High</p>
+          </div>
+          <span class="entry-duration">1:00</span>
+        </div>
+        <div class="entry-card">
+          <div class="entry-mood low">😔</div>
+          <div class="entry-info">
+            <h4>Feeling disconnected</h4>
+            <p>3 days ago · Stress level: Medium</p>
+          </div>
+          <span class="entry-duration">0:47</span>
+        </div>
+
+        <div style="height:90px;"></div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item active" onclick="showScreen('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            <span>Home</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('memory')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            <span>Echoes</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('matching')">
+            <div class="nav-help-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8a2.5 2.5 0 011.5 4.5L12 14"/><circle cx="12" cy="18" r="0.5" fill="currentColor"/></svg>
+            </div>
+          </div>
+          <div class="nav-item" onclick="showScreen('record')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/></svg>
+            <span>Record</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Me</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 2 — RECORDING ═══ -->
+      <div class="app-screen record-screen" id="screen-record">
+        <div class="status-bar light">
+          <span>9:41</span>
+          <div class="status-icons" style="color:var(--warm-cream);">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+          </div>
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;">
+          <div class="record-timer">0:47</div>
+          <div class="record-subtitle">Speak what's on your mind</div>
+
+          <div class="waveform-display">
+            <div class="wbar" style="--h:35px;animation-delay:0s;"></div>
+            <div class="wbar" style="--h:20px;animation-delay:0.1s;"></div>
+            <div class="wbar" style="--h:45px;animation-delay:0.15s;"></div>
+            <div class="wbar" style="--h:28px;animation-delay:0.25s;"></div>
+            <div class="wbar" style="--h:50px;animation-delay:0.05s;"></div>
+            <div class="wbar" style="--h:18px;animation-delay:0.3s;"></div>
+            <div class="wbar" style="--h:38px;animation-delay:0.12s;"></div>
+            <div class="wbar" style="--h:25px;animation-delay:0.22s;"></div>
+            <div class="wbar" style="--h:42px;animation-delay:0.08s;"></div>
+            <div class="wbar" style="--h:15px;animation-delay:0.2s;"></div>
+            <div class="wbar" style="--h:48px;animation-delay:0.18s;"></div>
+            <div class="wbar" style="--h:22px;animation-delay:0.28s;"></div>
+            <div class="wbar" style="--h:38px;animation-delay:0.06s;"></div>
+            <div class="wbar" style="--h:30px;animation-delay:0.16s;"></div>
+            <div class="wbar" style="--h:45px;animation-delay:0.1s;"></div>
+            <div class="wbar" style="--h:20px;animation-delay:0.24s;"></div>
+            <div class="wbar" style="--h:35px;animation-delay:0.14s;"></div>
+            <div class="wbar" style="--h:48px;animation-delay:0.02s;"></div>
+            <div class="wbar" style="--h:22px;animation-delay:0.2s;"></div>
+            <div class="wbar" style="--h:40px;animation-delay:0.09s;"></div>
+            <div class="wbar" style="--h:18px;animation-delay:0.26s;"></div>
+            <div class="wbar" style="--h:32px;animation-delay:0.04s;"></div>
+            <div class="wbar" style="--h:50px;animation-delay:0.13s;"></div>
+            <div class="wbar" style="--h:24px;animation-delay:0.19s;"></div>
+          </div>
+
+          <div class="record-main-btn" onclick="showScreen('home')">
+            <div class="stop-icon"></div>
+          </div>
+          <div class="record-hint">Tap to stop recording</div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 3 — MATCHING ═══ -->
+      <div class="app-screen matching-screen" id="screen-matching">
+        <div class="status-bar light">
+          <span>9:41</span>
+          <div class="status-icons" style="color:var(--warm-cream);">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+          </div>
+        </div>
+
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 32px;">
+          <div class="matching-circles">
+            <div class="match-ring match-ring-3"></div>
+            <div class="match-ring match-ring-2"></div>
+            <div class="match-ring match-ring-1"></div>
+            <div class="match-center">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+            </div>
+            <div class="match-avatar a1">K</div>
+            <div class="match-avatar a2">M</div>
+            <div class="match-avatar a3">R</div>
+            <div class="match-avatar a4">A</div>
+            <div class="match-avatar a5">J</div>
+          </div>
+
+          <div class="matching-status">Finding your circle…</div>
+          <div class="matching-detail">Matching 5 people who understand your context right now</div>
+
+          <div class="matching-tags">
+            <span class="match-tag found">✓ Similar stage</span>
+            <span class="match-tag found">✓ Same field</span>
+            <span class="match-tag found">✓ Your language</span>
+            <span class="match-tag">◌ Balanced mix</span>
+          </div>
+
+          <button style="
+            margin-top:32px;
+            background:var(--moss);
+            color:white;
+            border:none;
+            padding:14px 32px;
+            border-radius:100px;
+            font-size:15px;
+            font-weight:600;
+            font-family:'Nunito',sans-serif;
+            cursor:pointer;
+            box-shadow:0 4px 20px rgba(107,143,113,0.4);
+          " onclick="showScreen('session')">Join Circle →</button>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 4 — LIVE SESSION ═══ -->
+      <div class="app-screen session-screen" id="screen-session">
+        <div class="status-bar light">
+          <span>9:41</span>
+          <div class="status-icons" style="color:var(--warm-cream);">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+          </div>
+        </div>
+
+        <div class="session-header">
+          <div class="session-live-badge">Live Circle</div>
+          <span class="session-timer-small">12:34</span>
+          <span class="session-end-btn">Leave</span>
+        </div>
+
+        <div class="session-circle">
+          <div class="circle-container">
+            <!-- 6 members around circle -->
+            <div class="circle-member">
+              <div class="circle-member-avatar speaking" style="background:var(--ember);">K</div>
+              <span class="circle-member-label storm">In storm</span>
+            </div>
+            <div class="circle-member">
+              <div class="circle-member-avatar" style="background:var(--moss-light);">M</div>
+              <span class="circle-member-label ground">Finding ground</span>
+            </div>
+            <div class="circle-member">
+              <div class="circle-member-avatar" style="background:var(--blue-soft);">R</div>
+              <span class="circle-member-label ground">Finding ground</span>
+            </div>
+            <div class="circle-member">
+              <div class="circle-member-avatar" style="background:var(--moss);border:2px solid var(--moss-light);">
+                <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="16" height="16"><circle cx="12" cy="7" r="4"/><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/></svg>
+              </div>
+              <span class="circle-member-label you-label">You</span>
+            </div>
+            <div class="circle-member">
+              <div class="circle-member-avatar" style="background:var(--ember-light);">J</div>
+              <span class="circle-member-label through">Through it</span>
+            </div>
+            <div class="circle-member">
+              <div class="circle-member-avatar" style="background:var(--dusk);">A</div>
+              <span class="circle-member-label ground">Finding ground</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="ai-facilitator">
+          <div class="ai-avatar">🪨</div>
+          <div class="ai-msg"><strong>Cairn:</strong> K, thank you for sharing that. Take your time. Does anyone relate to what K is feeling?</div>
+        </div>
+
+        <div class="session-chat">
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:var(--ember);">K</div>
+            <div class="chat-bubble">
+              <div class="chat-name">K · In the storm</div>
+              <div class="chat-text">I just feel like I'm drowning at work and nobody notices. I don't even know who to talk to anymore.</div>
+            </div>
+          </div>
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:var(--ember-light);">J</div>
+            <div class="chat-bubble">
+              <div class="chat-name">J · Through it</div>
+              <div class="chat-text">I was exactly there six months ago. It does shift. What helped me was naming it out loud — like you just did.</div>
+            </div>
+          </div>
+          <div class="chat-msg">
+            <div class="chat-avatar" style="background:var(--moss-light);">M</div>
+            <div class="chat-bubble">
+              <div class="chat-name">M · Finding ground</div>
+              <div class="chat-text">Same. Hearing J say that actually gives me hope too.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="session-input-area">
+          <input class="session-input" placeholder="Share your thoughts..." readonly>
+          <div class="session-mic-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 5 — MEMORY WALL ═══ -->
+      <div class="app-screen memory-screen" id="screen-memory">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+          </div>
+        </div>
+
+        <div class="memory-top">
+          <h2>Memory Wall</h2>
+          <p>Echoes from past circles — what helped, what gave hope</p>
+        </div>
+
+        <div class="memory-filter">
+          <div class="memory-pill active">All</div>
+          <div class="memory-pill">Career</div>
+          <div class="memory-pill">Burnout</div>
+          <div class="memory-pill">Anxiety</div>
+          <div class="memory-pill">Loneliness</div>
+        </div>
+
+        <div class="memory-cards">
+          <div class="mem-card">
+            <div class="mem-card-header">
+              <span class="mem-card-tag">Burnout</span>
+              <span class="mem-card-date">2 days ago</span>
+            </div>
+            <h4>"Reframing the question changed everything"</h4>
+            <p>A circle member shared that instead of asking "how do I fix this?" they started asking "what am I learning?" — and the pressure slowly lifted.</p>
+            <div class="mem-card-footer">
+              <span class="mem-react">💡 24 found this helpful</span>
+            </div>
+          </div>
+
+          <div class="mem-card">
+            <div class="mem-card-header">
+              <span class="mem-card-tag">Career pressure</span>
+              <span class="mem-card-date">5 days ago</span>
+            </div>
+            <h4>"Permission to not have it figured out"</h4>
+            <p>Someone who'd been through it reminded the group: your 20s and 30s are supposed to be messy. The clarity comes from movement, not planning.</p>
+            <div class="mem-card-footer">
+              <span class="mem-react">🌱 41 found this helpful</span>
+            </div>
+          </div>
+
+          <div class="mem-card">
+            <div class="mem-card-header">
+              <span class="mem-card-tag">Anxiety</span>
+              <span class="mem-card-date">1 week ago</span>
+            </div>
+            <h4>"The 5-minute rule broke my paralysis"</h4>
+            <p>Just commit to 5 minutes of the scary thing. After 5 minutes, you can stop. Most of the time, you keep going. Simple but it works.</p>
+            <div class="mem-card-footer">
+              <span class="mem-react">✨ 63 found this helpful</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item" onclick="showScreen('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            <span>Home</span>
+          </div>
+          <div class="nav-item active" onclick="showScreen('memory')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--moss)" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            <span style="color:var(--moss);">Echoes</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('matching')">
+            <div class="nav-help-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8a2.5 2.5 0 011.5 4.5L12 14"/><circle cx="12" cy="18" r="0.5" fill="currentColor"/></svg>
+            </div>
+          </div>
+          <div class="nav-item" onclick="showScreen('record')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+            <span>Record</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span>Me</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ SCREEN 6 — PROFILE / PERSONA ═══ -->
+      <div class="app-screen profile-screen" id="screen-profile">
+        <div class="status-bar light">
+          <span>9:41</span>
+          <div class="status-icons" style="color:white;">
+            <svg viewBox="0 0 16 16" fill="currentColor"><path d="M1 12h2v3H1zm4-4h2v7H5zm4-3h2v10H9zm4-4h2v14h-2z"/></svg>
+          </div>
+        </div>
+
+        <div class="profile-header-bg">
+          <div class="profile-avatar-big">🌿</div>
+          <div class="profile-name">Anonymous You</div>
+          <div class="profile-sub">Your persona · Updated today</div>
+        </div>
+
+        <div class="profile-body">
+          <div class="profile-stats">
+            <div class="p-stat">
+              <div class="p-stat-num">23</div>
+              <div class="p-stat-label">Entries</div>
+            </div>
+            <div class="p-stat">
+              <div class="p-stat-num">8</div>
+              <div class="p-stat-label">Circles</div>
+            </div>
+            <div class="p-stat">
+              <div class="p-stat-num">7</div>
+              <div class="p-stat-label">Day streak</div>
+            </div>
+          </div>
+
+          <div class="persona-card">
+            <div class="persona-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+              Your Persona
+            </div>
+            <div class="stage-display">
+              <div class="stage-icon">🌱</div>
+              <div class="stage-text">
+                <h4>Finding Ground</h4>
+                <p>Processing and gaining clarity</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="persona-card">
+            <div class="persona-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+              Current Levels
+            </div>
+            <div class="persona-meter">
+              <div class="meter-label"><span>Stress</span><span>Moderate</span></div>
+              <div class="meter-track"><div class="meter-fill ember" style="width:55%;"></div></div>
+            </div>
+            <div class="persona-meter">
+              <div class="meter-label"><span>Recovery</span><span>Growing</span></div>
+              <div class="meter-track"><div class="meter-fill moss" style="width:65%;"></div></div>
+            </div>
+            <div class="persona-meter">
+              <div class="meter-label"><span>Engagement</span><span>Active</span></div>
+              <div class="meter-track"><div class="meter-fill moss" style="width:80%;"></div></div>
+            </div>
+          </div>
+
+          <div class="persona-card">
+            <div class="persona-card-title">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+              Matching Context
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;">
+              <span style="background:var(--moss-glow);color:var(--moss);font-size:12px;font-weight:500;padding:5px 12px;border-radius:100px;">Tech industry</span>
+              <span style="background:var(--ember-glow);color:var(--ember);font-size:12px;font-weight:500;padding:5px 12px;border-radius:100px;">Career pressure</span>
+              <span style="background:rgba(90,143,212,0.1);color:var(--blue-soft);font-size:12px;font-weight:500;padding:5px 12px;border-radius:100px;">Late 20s</span>
+              <span style="background:var(--sand);color:var(--dusk);font-size:12px;font-weight:500;padding:5px 12px;border-radius:100px;">English</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="height: 90px;"></div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <div class="nav-item" onclick="showScreen('home')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+            <span>Home</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('memory')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+            <span>Echoes</span>
+          </div>
+          <div class="nav-item" onclick="showScreen('matching')">
+            <div class="nav-help-btn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8a2.5 2.5 0 011.5 4.5L12 14"/><circle cx="12" cy="18" r="0.5" fill="currentColor"/></svg>
+            </div>
+          </div>
+          <div class="nav-item" onclick="showScreen('record')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>
+            <span>Record</span>
+          </div>
+          <div class="nav-item active" onclick="showScreen('profile')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="var(--moss)" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <span style="color:var(--moss);">Me</span>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /phone-screen -->
+  </div><!-- /phone-frame -->
+</div><!-- /phone-stage -->
+
+<script>
+function showScreen(name) {
+  // Update screens
+  document.querySelectorAll('.app-screen').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('screen-' + name);
+  if (target) {
+    target.classList.add('active');
+    target.scrollTop = 0;
+  }
+
+  // Update tabs
+  document.querySelectorAll('.screen-tab').forEach(t => t.classList.remove('active'));
+  const tab = document.querySelector(`[data-screen="${name}"]`);
+  if (tab) tab.classList.add('active');
+}
+
+// Tab clicks
+document.querySelectorAll('.screen-tab').forEach(tab => {
+  tab.addEventListener('click', () => showScreen(tab.dataset.screen));
+});
+
+// Memory pill filter
+document.querySelectorAll('.memory-pill').forEach(pill => {
+  pill.addEventListener('click', () => {
+    document.querySelectorAll('.memory-pill').forEach(p => p.classList.remove('active'));
+    pill.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
