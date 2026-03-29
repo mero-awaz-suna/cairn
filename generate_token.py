@@ -11,8 +11,8 @@ supabase = create_client(
 )
 
 BASE_URL = os.getenv("CAIRN_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
-TEST_EMAIL = os.getenv("TEST_EMAIL", "persona_test_087d36e584@example.com")
-TEST_PASSWORD = os.getenv("TEST_PASSWORD", "TestPassword123!")
+TEST_EMAIL = os.getenv("TEST_EMAIL", "prateekpokhrel@gmail.com")
+TEST_PASSWORD = os.getenv("TEST_PASSWORD", "password@123")
 USE_SUPABASE_AUTH = os.getenv("USE_SUPABASE_AUTH", "false").lower() == "true"
 
 # # Step 1: Create the test user (only needed once)
