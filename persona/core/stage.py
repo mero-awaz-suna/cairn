@@ -287,7 +287,7 @@ if __name__ == "__main__":
         UserDemographics,
         UserPersona,
     )
-    from persona_engine import PersonaEngine, create_persona
+    from .persona import PersonaEngine, create_persona
 
     print("=" * 60)
     print("Stage Classifier — smoke test")

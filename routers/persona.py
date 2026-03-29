@@ -28,7 +28,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, Field
 
-from auth import get_cairn_user, supabase
+from auth import get_cairn_user
 from persona.core.models import (
     AgeGroup,
     OccupationCategory,
@@ -40,7 +40,7 @@ from db.persona_store import PersonaStore
 from persona.core.pipeline import CairnPipeline
 
 logger = logging.getLogger(__name__)
-router = APIRouter(prefix="/persona", tags=["persona"])
+router = APIRouter(tags=["persona"])
 
 
 # ─────────────────────────────────────────────────────────────────────────────

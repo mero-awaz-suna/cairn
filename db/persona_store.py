@@ -1,387 +1,345 @@
-"""
-cairn/db/persona_store.py
-
-All Supabase read/write for the persona system.
-
-Two responsibilities:
-    1. Serialization — UserPersona (numpy dataclass) ↔ Supabase-safe dict
-    2. Storage — load, save, and log entries to Supabase
-
-Nothing in this file knows about FastAPI or HTTP.
-The route layer calls these functions and handles HTTP concerns.
-
-Usage:
-    store = PersonaStore(supabase_client)
-
-    # At onboarding:
-    persona = store.create(user_id, demographics)
-
-    # After pipeline.process():
-    store.save(persona, pipeline_result)
-
-    # At request time:
-    persona = store.load(user_id)          # returns None if not found
-"""
-
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from datetime import datetime, timezone
+from typing import Any, Optional
 
 import numpy as np
 
 from persona.core.models import (
     AgeGroup,
-    Dims,
     OccupationCategory,
-    PersonaBaseline,
-    PersonaVectors,
     Stage,
     StageState,
     UserDemographics,
     UserPersona,
 )
 from persona.core.persona import create_persona
-from persona.core.pipeline import PipelineResult
 
 logger = logging.getLogger(__name__)
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Serialization helpers — numpy ↔ plain Python
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def _arr_to_list(arr: np.ndarray) -> list[float]:
-    """numpy array → JSON-serializable list of Python floats."""
-    return arr.astype(float).tolist()
-
-
-def _list_to_arr(lst: list, dtype=np.float32) -> np.ndarray:
-    """JSON list → numpy array. Returns zeros if list is empty or None."""
-    if not lst:
-        return np.array([], dtype=dtype)
-    return np.array(lst, dtype=dtype)
-
-
-def _list_to_arr_or_zeros(lst: list, size: int, dtype=np.float32) -> np.ndarray:
-    """JSON list → numpy array, falling back to zeros of given size."""
-    if not lst or len(lst) != size:
-        return np.zeros(size, dtype=dtype)
-    return np.array(lst, dtype=dtype)
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Persona → Supabase row
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def persona_to_row(persona: UserPersona) -> dict:
-    """
-    Serialize a UserPersona into a flat dict suitable for Supabase upsert.
-    All numpy arrays become JSON lists. All enums become strings.
-    """
-    d = persona.demographics
-    v = persona.vectors
-    b = persona.baseline
-
-    return {
-        "user_id": persona.user_id,
-        # Demographics
-        "age_group": d.age_group.value,
-        "occupation": d.occupation.value,
-        "industry": d.industry,
-        "language_code": d.language_code,
-        "region_code": d.region_code,
-        "living_situation": d.living_situation,
-        # Vectors
-        "acoustic_short": _arr_to_list(v.acoustic_short),
-        "acoustic_long": _arr_to_list(v.acoustic_long),
-        "linguistic_short": _arr_to_list(v.linguistic_short),
-        "linguistic_long": _arr_to_list(v.linguistic_long),
-        "identity_vec": _arr_to_list(v.identity),
-        "behavioral": _arr_to_list(v.behavioral),
-        # Baseline
-        "baseline_mean": _arr_to_list(b.feature_mean),
-        "baseline_std": _arr_to_list(b.feature_std),
-        "baseline_n_samples": b.n_samples,
-        # Derived — stored flat for matchability
-        "stressor_dist": _arr_to_list(persona.stressor_dist),
-        "stage": persona.stage.current.value,
-        "stage_confidence": round(float(persona.stage.confidence), 4),
-        "cluster_id": persona.cluster_id,
-        "trajectory_stress": round(float(persona.trajectory_stress), 4),
-        "trajectory_recovery": round(float(persona.trajectory_recovery), 4),
-        # Metadata
-        "entry_count": persona.entry_count,
-        "last_entry_at": (
-            None
-            if persona.last_entry_time == 0.0
-            else _unix_to_iso(persona.last_entry_time)
-        ),
-        "is_available": persona.is_available,
-    }
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Supabase row → Persona
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def row_to_persona(row: dict) -> UserPersona:
-    """
-    Deserialize a Supabase row back into a UserPersona.
-    Inverse of persona_to_row().
-    """
-    demographics = UserDemographics(
-        age_group=AgeGroup(row["age_group"]),
-        occupation=OccupationCategory(row["occupation"]),
-        industry=row["industry"],
-        language_code=row["language_code"],
-        region_code=row["region_code"],
-        living_situation=row["living_situation"],
-    )
-
-    vectors = PersonaVectors(
-        acoustic_short=_list_to_arr_or_zeros(row.get("acoustic_short"), Dims.ACOUSTIC),
-        acoustic_long=_list_to_arr_or_zeros(row.get("acoustic_long"), Dims.ACOUSTIC),
-        linguistic_short=_list_to_arr_or_zeros(
-            row.get("linguistic_short"), Dims.LINGUISTIC
-        ),
-        linguistic_long=_list_to_arr_or_zeros(
-            row.get("linguistic_long"), Dims.LINGUISTIC
-        ),
-        identity=_list_to_arr_or_zeros(row.get("identity_vec"), Dims.IDENTITY),
-        behavioral=_list_to_arr_or_zeros(row.get("behavioral"), Dims.BEHAVIORAL),
-    )
-
-    baseline = PersonaBaseline(
-        feature_mean=_list_to_arr_or_zeros(row.get("baseline_mean"), 20),
-        feature_std=_list_to_arr_or_zeros(row.get("baseline_std"), 20),
-        n_samples=row.get("baseline_n_samples", 0),
-    )
-    # Ensure std is never zero (safe division in normalization)
-    baseline.feature_std = np.maximum(baseline.feature_std, 1e-6)
-
-    stage_state = StageState(
-        current=Stage(row.get("stage", Stage.FINDING_GROUND.value)),
-        confidence=float(row.get("stage_confidence", 0.5)),
-    )
-
-    persona = UserPersona(
-        user_id=row["user_id"],
-        demographics=demographics,
-        vectors=vectors,
-        baseline=baseline,
-        stage=stage_state,
-        stressor_dist=_list_to_arr_or_zeros(row.get("stressor_dist"), Dims.STRESSOR),
-        cluster_id=row.get("cluster_id"),
-        entry_count=row.get("entry_count", 0),
-        last_entry_time=_iso_to_unix(row.get("last_entry_at")),
-        is_available=row.get("is_available", False),
-    )
-
-    return persona
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Entry row — the immutable audit log
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def result_to_entry_row(persona: UserPersona, result: PipelineResult) -> dict:
-    """
-    Build the persona_entries insert row from a PipelineResult.
-    Called once per memo submission — never updated.
-    """
-    ef = result.entry_features
-    ss = result.stage_scores
-    timing = result.timing
-
-    row = {
-        "user_id": persona.user_id,
-        "day_number": ef.day_number if ef else 0,
-        "hour_of_day": ef.hour_of_day if ef else 0,
-        "memo_duration_s": ef.memo_length_seconds if ef else 0.0,
-        "stage": persona.stage.current.value,
-        "stage_confidence": round(float(persona.stage.confidence), 4),
-        "stress_score": round(float(ss.stress_score), 4),
-        "recovery_score": round(float(ss.recovery_score), 4),
-        "crisis_flag": result.crisis_flag,
-        "crisis_reason": result.crisis_reason,
-        "acoustic_ms": timing.get("acoustic_ms"),
-        "linguistic_ms": timing.get("linguistic_ms"),
-        "total_ms": timing.get("total_ms"),
-    }
-
-    # Linguistic features — only present if extraction succeeded
-    if ef:
-        ling = ef.linguistic
-        row.update(
-            {
-                "valence": round(float(ling.valence), 4),
-                "arousal": round(float(ling.arousal), 4),
-                "agency_score": round(float(ling.agency_score), 4),
-                "distortion_score": round(float(ling.distortion_score), 4),
-                "coping_score": round(float(ling.coping_score), 4),
-                "urgency_signal": round(float(ling.urgency_signal), 4),
-                "help_seeking_signal": round(float(ling.help_seeking_signal), 4),
-                "stressor_dist": _arr_to_list(ling.stressor_dist),
-            }
-        )
-
-    return row
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Time helpers
-# ─────────────────────────────────────────────────────────────────────────────
-
-
-def _unix_to_iso(ts: float) -> str:
-    """Unix timestamp → ISO 8601 string for Postgres timestamptz."""
-    from datetime import datetime, timezone
-
-    return datetime.fromtimestamp(ts, tz=timezone.utc).isoformat()
-
-
-def _iso_to_unix(iso: Optional[str]) -> float:
-    """ISO 8601 string → Unix timestamp. Returns 0.0 if None."""
-    if not iso:
-        return 0.0
-    from datetime import datetime, timezone
-
-    try:
-        dt = datetime.fromisoformat(iso.replace("Z", "+00:00"))
-        return dt.timestamp()
-    except (ValueError, AttributeError):
-        return 0.0
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# The store
-# ─────────────────────────────────────────────────────────────────────────────
 
 
 class PersonaStore:
     """
-    All Supabase I/O for the persona system.
+    Supabase-backed persistence for UserPersona.
 
-    Pass in the Supabase client from auth.py — don't create a new one here.
-    One instance, shared across all requests via FastAPI dependency injection.
+    Primary storage:
+            - persona_state.user_id (unique)
+            - persona_state.persona_payload (json/jsonb)
 
-    Usage:
-        store = PersonaStore(supabase)  # once, at app startup
-        app.state.persona_store = store
-
-        # In routes — inject via Depends
-        def get_store(request: Request) -> PersonaStore:
-            return request.app.state.persona_store
+    Read model synchronization:
+            - users.state
+            - users.cluster_id
+            - users.current_persona
+            - users.current_stress_level
+            - users.persona_confidence
+            - users.is_in_crisis
+            - users.last_journal_at
     """
 
-    def __init__(self, supabase_client):
-        self._db = supabase_client
-
-    # ── Read ──────────────────────────────────────────────────────────────────
-
-    def load(self, user_id: str) -> Optional[UserPersona]:
-        """
-        Load a persona from Supabase by user_id.
-        Returns None if the user hasn't onboarded yet.
-        """
-        try:
-            result = (
-                self._db.table("user_personas")
-                .select("*")
-                .eq("user_id", user_id)
-                .single()
-                .execute()
-            )
-            if not result.data:
-                return None
-            return row_to_persona(result.data)
-        except Exception as e:
-            # .single() raises if no row found — treat as None
-            logger.debug("Persona not found for user_id=%s: %s", user_id, e)
-            return None
-
-    # ── Write ─────────────────────────────────────────────────────────────────
-
-    def create(
+    def __init__(
         self,
-        user_id: str,
-        demographics: UserDemographics,
-    ) -> UserPersona:
-        """
-        Create a fresh persona at onboarding and persist it.
-        Returns the new UserPersona.
-        Raises if the user already has a persona (use load() first).
-        """
-        persona = create_persona(user_id, demographics)
-        row = persona_to_row(persona)
+        client,
+        persona_table: str = "persona_state",
+        history_table: str = "user_persona_history",
+        users_table: str = "users",
+    ):
+        self.client = client
+        self.persona_table = persona_table
+        self.history_table = history_table
+        self.users_table = users_table
 
-        self._db.table("user_personas").insert(row).execute()
-        logger.info("Created persona for user_id=%s", user_id)
+    def create(self, user_id: str, demographics: UserDemographics) -> UserPersona:
+        """Create and persist a new persona for a user."""
+        persona = create_persona(user_id=user_id, demographics=demographics)
+        self._upsert_persona_state(persona)
+        self._sync_users_from_persona(persona)
         return persona
 
-    def save(
-        self,
-        persona: UserPersona,
-        result: PipelineResult,
-    ) -> None:
+    def load(self, user_id: str) -> Optional[UserPersona]:
+        """Load persona from DB. Returns None when not found."""
+        try:
+            result = (
+                self.client.table(self.persona_table)
+                .select("persona_payload")
+                .eq("user_id", user_id)
+                .limit(1)
+                .execute()
+            )
+        except Exception as exc:
+            logger.warning("load persona failed for user=%s: %s", user_id, exc)
+            return None
+
+        if not result.data:
+            return None
+
+        payload = result.data[0].get("persona_payload")
+        if not payload:
+            return None
+
+        try:
+            return self._deserialize_persona(payload)
+        except Exception as exc:
+            logger.error("persona deserialization failed user=%s: %s", user_id, exc)
+            return None
+
+    def save(self, persona: UserPersona, result: Any) -> None:
         """
-        Persist updated persona + log the entry.
-        Call this after every successful pipeline.process().
+        Persist persona updates after pipeline processing.
 
-        Two writes:
-            1. Upsert user_personas   — updates the live persona
-            2. Insert persona_entries — appends to the audit log
+        `result` is expected to be PipelineResult-like and provide:
+                - stage_scores
+                - crisis_flag
+                - entry_features (optional)
         """
-        persona_row = persona_to_row(persona)
-        entry_row = result_to_entry_row(persona, result)
+        self._upsert_persona_state(persona)
+        self._sync_users_from_persona(persona, result=result)
+        self._insert_history_row(persona, result)
 
-        # Upsert persona (create if somehow missing, update otherwise)
-        self._db.table("user_personas").upsert(persona_row).execute()
+    def get_entry_history(self, user_id: str, limit: int = 14) -> list[dict]:
+        """Return newest-first persona history rows for UI timelines."""
+        safe_limit = max(1, min(int(limit), 100))
+        try:
+            result = (
+                self.client.table(self.history_table)
+                .select("*")
+                .eq("user_id", user_id)
+                .order("created_at", desc=True)
+                .limit(safe_limit)
+                .execute()
+            )
+            return result.data or []
+        except Exception as exc:
+            logger.warning("history lookup failed for user=%s: %s", user_id, exc)
+            return []
 
-        # Append entry to history
-        self._db.table("persona_entries").insert(entry_row).execute()
+    def load_all(self, limit: Optional[int] = None) -> list[UserPersona]:
+        """Load all persisted personas for clustering jobs."""
+        try:
+            query = self.client.table(self.persona_table).select("persona_payload")
+            if limit is not None:
+                query = query.limit(max(1, int(limit)))
+            result = query.execute()
+        except Exception as exc:
+            logger.warning("bulk persona load failed: %s", exc)
+            return []
 
-        logger.info(
-            "Saved persona: user=%s entry=%d stage=%s crisis=%s",
-            persona.user_id,
-            persona.entry_count,
-            persona.stage.current.value,
-            result.crisis_flag,
-        )
+        personas: list[UserPersona] = []
+        for row in result.data or []:
+            payload = row.get("persona_payload")
+            if not payload:
+                continue
+            try:
+                personas.append(self._deserialize_persona(payload))
+            except Exception as exc:
+                user_hint = (
+                    payload.get("user_id") if isinstance(payload, dict) else "unknown"
+                )
+                logger.warning(
+                    "skipping invalid persona payload user=%s: %s", user_hint, exc
+                )
+        return personas
 
-    def set_available(self, user_id: str, available: bool) -> None:
-        """
-        Toggle is_available. Call when user goes online/offline or
-        joins/leaves a session.
-        """
-        self._db.table("user_personas").update({"is_available": available}).eq(
-            "user_id", user_id
+    def _upsert_persona_state(self, persona: UserPersona) -> None:
+        payload = {
+            "user_id": persona.user_id,
+            "persona_payload": self._serialize_persona(persona),
+            "updated_at": self._now_iso(),
+        }
+        self.client.table(self.persona_table).upsert(
+            payload, on_conflict="user_id"
         ).execute()
 
-    # ── History ───────────────────────────────────────────────────────────────
+    def _sync_users_from_persona(
+        self, persona: UserPersona, result: Any = None
+    ) -> None:
+        user_update: dict[str, Any] = {
+            "state": persona.stage.current.value,
+            "cluster_id": persona.cluster_id,
+            "current_persona": self._stage_to_legacy_persona(persona.stage.current),
+            "persona_confidence": float(persona.stage.confidence),
+        }
 
-    def get_entry_history(
-        self,
-        user_id: str,
-        limit: int = 30,
-    ) -> list[dict]:
-        """
-        Fetch the most recent `limit` entries for a user.
-        Returns raw dicts — the route layer shapes them for the response.
-        """
-        result = (
-            self._db.table("persona_entries")
-            .select(
-                "created_at, day_number, stage, stress_score, recovery_score, "
-                "valence, agency_score, distortion_score, crisis_flag, total_ms"
+        if result is not None:
+            stress_score = getattr(
+                getattr(result, "stage_scores", None), "stress_score", None
             )
-            .eq("user_id", user_id)
-            .order("created_at", desc=True)
-            .limit(limit)
-            .execute()
+            if stress_score is not None:
+                user_update["current_stress_level"] = int(
+                    round(float(stress_score) * 10)
+                )
+
+            crisis_flag = getattr(result, "crisis_flag", None)
+            if crisis_flag is not None:
+                user_update["is_in_crisis"] = bool(crisis_flag)
+
+            user_update["last_journal_at"] = self._now_iso()
+
+        self.client.table(self.users_table).update(user_update).eq(
+            "id", persona.user_id
+        ).execute()
+
+    def _insert_history_row(self, persona: UserPersona, result: Any) -> None:
+        stage_scores = getattr(result, "stage_scores", None)
+        entry_features = getattr(result, "entry_features", None)
+
+        row = {
+            "user_id": persona.user_id,
+            "persona": self._stage_to_legacy_persona(persona.stage.current),
+            "stage": persona.stage.current.value,
+            "stress_level": (
+                int(round(float(stage_scores.stress_score) * 10))
+                if stage_scores
+                else None
+            ),
+            "stress_score": float(stage_scores.stress_score) if stage_scores else None,
+            "recovery_score": (
+                float(stage_scores.recovery_score) if stage_scores else None
+            ),
+            "day_number": getattr(entry_features, "day_number", persona.entry_count),
+            "valence": (
+                float(entry_features.linguistic.valence) if entry_features else None
+            ),
+            "agency_score": (
+                float(entry_features.linguistic.agency_score)
+                if entry_features
+                else None
+            ),
+            "created_at": self._now_iso(),
+        }
+
+        try:
+            self.client.table(self.history_table).insert(row).execute()
+        except Exception as exc:
+            logger.warning(
+                "rich history insert failed user=%s; retrying minimal row: %s",
+                persona.user_id,
+                exc,
+            )
+            minimal_row = {
+                "user_id": persona.user_id,
+                "persona": row["persona"],
+                "stress_level": row["stress_level"],
+            }
+            try:
+                self.client.table(self.history_table).insert(minimal_row).execute()
+            except Exception as inner_exc:
+                logger.error(
+                    "history insert failed user=%s: %s", persona.user_id, inner_exc
+                )
+
+    def _serialize_persona(self, persona: UserPersona) -> dict[str, Any]:
+        return {
+            "user_id": persona.user_id,
+            "demographics": {
+                "age_group": persona.demographics.age_group.value,
+                "occupation": persona.demographics.occupation.value,
+                "industry": persona.demographics.industry,
+                "language_code": persona.demographics.language_code,
+                "region_code": persona.demographics.region_code,
+                "living_situation": persona.demographics.living_situation,
+            },
+            "vectors": {
+                "acoustic_short": self._array_to_list(persona.vectors.acoustic_short),
+                "acoustic_long": self._array_to_list(persona.vectors.acoustic_long),
+                "linguistic_short": self._array_to_list(
+                    persona.vectors.linguistic_short
+                ),
+                "linguistic_long": self._array_to_list(persona.vectors.linguistic_long),
+                "identity": self._array_to_list(persona.vectors.identity),
+                "behavioral": self._array_to_list(persona.vectors.behavioral),
+            },
+            "baseline": {
+                "feature_mean": self._array_to_list(persona.baseline.feature_mean),
+                "feature_std": self._array_to_list(persona.baseline.feature_std),
+                "n_samples": int(persona.baseline.n_samples),
+            },
+            "stage": {
+                "current": persona.stage.current.value,
+                "confidence": float(persona.stage.confidence),
+            },
+            "stressor_dist": self._array_to_list(persona.stressor_dist),
+            "cluster_id": persona.cluster_id,
+            "entry_count": int(persona.entry_count),
+            "last_entry_time": float(persona.last_entry_time),
+            "is_available": bool(persona.is_available),
+        }
+
+    def _deserialize_persona(self, payload: dict[str, Any]) -> UserPersona:
+        dem = payload.get("demographics", {})
+        demographics = UserDemographics(
+            age_group=AgeGroup(dem.get("age_group", AgeGroup.LATE_20S.value)),
+            occupation=OccupationCategory(
+                dem.get("occupation", OccupationCategory.OTHER.value)
+            ),
+            industry=dem.get("industry", "unknown"),
+            language_code=dem.get("language_code", "en"),
+            region_code=dem.get("region_code", "US"),
+            living_situation=dem.get("living_situation", "alone"),
         )
-        return result.data or []
+
+        persona = create_persona(user_id=payload["user_id"], demographics=demographics)
+
+        vec = payload.get("vectors", {})
+        persona.vectors.acoustic_short = self._list_to_array(
+            vec.get("acoustic_short", [])
+        )
+        persona.vectors.acoustic_long = self._list_to_array(
+            vec.get("acoustic_long", [])
+        )
+        persona.vectors.linguistic_short = self._list_to_array(
+            vec.get("linguistic_short", [])
+        )
+        persona.vectors.linguistic_long = self._list_to_array(
+            vec.get("linguistic_long", [])
+        )
+        persona.vectors.identity = self._list_to_array(vec.get("identity", []))
+        persona.vectors.behavioral = self._list_to_array(vec.get("behavioral", []))
+
+        baseline = payload.get("baseline", {})
+        persona.baseline.feature_mean = self._list_to_array(
+            baseline.get("feature_mean", []), dtype=np.float32
+        )
+        persona.baseline.feature_std = self._list_to_array(
+            baseline.get("feature_std", []), dtype=np.float32
+        )
+        persona.baseline.n_samples = int(baseline.get("n_samples", 0))
+
+        stage_payload = payload.get("stage", {})
+        stage_raw = stage_payload.get("current", Stage.FINDING_GROUND.value)
+        persona.stage = StageState(
+            current=Stage(stage_raw),
+            confidence=float(stage_payload.get("confidence", 0.5)),
+        )
+
+        persona.stressor_dist = self._list_to_array(
+            payload.get("stressor_dist", []), dtype=np.float32
+        )
+        persona.cluster_id = payload.get("cluster_id")
+        persona.entry_count = int(payload.get("entry_count", 0))
+        persona.last_entry_time = float(payload.get("last_entry_time", 0.0))
+        persona.is_available = bool(payload.get("is_available", False))
+
+        return persona
+
+    @staticmethod
+    def _array_to_list(arr: np.ndarray | list[float]) -> list[float]:
+        if isinstance(arr, list):
+            return [float(v) for v in arr]
+        return [float(v) for v in np.asarray(arr).tolist()]
+
+    @staticmethod
+    def _list_to_array(values: list[float], dtype=np.float32) -> np.ndarray:
+        return np.asarray(values, dtype=dtype)
+
+    @staticmethod
+    def _now_iso() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _stage_to_legacy_persona(stage: Stage) -> str:
+        if stage == Stage.IN_THE_STORM:
+            return "storm"
+        if stage == Stage.THROUGH_IT:
+            return "through_it"
+        return "ground"

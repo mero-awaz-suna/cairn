@@ -1,4 +1,5 @@
 import logging
+import asyncio
 
 from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
@@ -9,6 +10,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from auth import supabase
 from db.persona_store import PersonaStore
+from db.circle_store import CircleStore
+from db.cluster_store import ClusterStore
 
 
 from persona.core.pipeline import CairnPipeline
@@ -16,6 +19,42 @@ from routers.persona import router as persona_router
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+async def run_cluster_refresh_once(app: FastAPI) -> None:
+    cluster_store = app.state.cluster_store
+
+    if hasattr(cluster_store, "batch_assign_from_personas"):
+        personas = app.state.persona_store.load_all()
+        if not personas:
+            logger.info("Cluster refresh skipped: no personas available.")
+            return
+
+        assignments = cluster_store.batch_assign_from_personas(personas)
+        logger.info(
+            "Cluster refresh complete: personas=%d assignments=%d",
+            len(personas),
+            len(assignments),
+        )
+        return
+
+    if hasattr(cluster_store, "run_cluster_job"):
+        summary = cluster_store.run_cluster_job()
+        logger.info("Cluster refresh complete via run_cluster_job: %s", summary)
+        return
+
+    logger.warning(
+        "Cluster refresh skipped: cluster_store has no supported job method."
+    )
+
+
+async def cluster_refresh_loop(app: FastAPI, interval_seconds: int = 3600) -> None:
+    while True:
+        try:
+            await run_cluster_refresh_once(app)
+        except Exception:
+            logger.exception("Cluster refresh job failed.")
+        await asyncio.sleep(interval_seconds)
 
 
 @asynccontextmanager
@@ -30,6 +69,11 @@ async def lifespan(app: FastAPI):
     app.state.persona_store = PersonaStore(supabase)
     logger.info("PersonaStore ready.")
 
+    # ── Circle / Cluster stores ───────────────────────────────────────────────
+    app.state.circle_store = CircleStore(supabase)
+    app.state.cluster_store = ClusterStore(supabase)
+    logger.info("CircleStore and ClusterStore ready.")
+
     # ── Pipeline ──────────────────────────────────────────────────────────────
     # Development: both extractors mocked (no API keys or model weights needed)
     # Staging:     use_mock_audio=True, real Gemini linguistic extractor
@@ -40,7 +84,19 @@ async def lifespan(app: FastAPI):
     )
     logger.info("CairnPipeline ready.")
 
+    # ── Background cluster refresh (hourly) ──────────────────────────────────
+    app.state.cluster_refresh_task = asyncio.create_task(cluster_refresh_loop(app))
+    logger.info("Hourly cluster refresh loop started.")
+
     yield
+
+    task = getattr(app.state, "cluster_refresh_task", None)
+    if task is not None:
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            logger.info("Cluster refresh loop stopped.")
 
     logger.info("Shutting down.")
 
