@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
@@ -46,6 +46,39 @@ const fadeIn = {
 const staggerContainer = {
   animate: { transition: { staggerChildren: 0.15 } },
 };
+
+const PROCESSING_MSGS = [
+  "Reading between the lines...",
+  "Understanding your stress patterns...",
+  "Finding others who carry this...",
+  "Building your recognition...",
+];
+
+function ProcessingMessages() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIdx((prev) => Math.min(prev + 1, PROCESSING_MSGS.length - 1));
+    }, 1200);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.p
+        key={idx}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.3 }}
+        className="text-[14px] font-light text-center"
+        style={{ color: "#8B7E74" }}
+      >
+        {PROCESSING_MSGS[idx]}
+      </motion.p>
+    </AnimatePresence>
+  );
+}
 
 export default function RecordPage() {
   const router = useRouter();
@@ -325,7 +358,7 @@ export default function RecordPage() {
       )}
 
       {/* ══════════════════════════════════════════════════════════════ */}
-      {/* PROCESSING — Pulsing dot + "Reading between the lines."      */}
+      {/* PROCESSING — Breathing animation with cycling messages        */}
       {/* ══════════════════════════════════════════════════════════════ */}
       {phase === "processing" && (
         <motion.div
@@ -337,21 +370,21 @@ export default function RecordPage() {
           className="min-h-screen flex flex-col items-center justify-center"
           style={{ backgroundColor: "#2C2825" }}
         >
+          {/* Breathing circle */}
           <motion.div
-            className="w-3 h-3 rounded-full mb-6"
-            style={{ backgroundColor: "#6B8F71" }}
-            animate={{ scale: [1, 1.6, 1], opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <motion.p
-            className="text-[14px] font-light"
-            style={{ color: "#8B7E74" }}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }}
+            className="w-16 h-16 rounded-full mb-8 flex items-center justify-center"
+            style={{ backgroundColor: "rgba(107,143,113,0.12)", border: "1px solid rgba(107,143,113,0.2)" }}
+            animate={{ scale: [1, 1.15, 1], borderColor: ["rgba(107,143,113,0.2)", "rgba(107,143,113,0.4)", "rgba(107,143,113,0.2)"] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
-            Reading between the lines.
-          </motion.p>
+            <motion.div
+              className="w-3 h-3 rounded-full"
+              style={{ backgroundColor: "#6B8F71" }}
+              animate={{ scale: [1, 1.4, 1], opacity: [0.7, 1, 0.7] }}
+              transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+          <ProcessingMessages />
         </motion.div>
       )}
 

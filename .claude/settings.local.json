@@ -25,7 +25,11 @@
       "Bash(pnpm --filter @cairn/web add framer-motion)",
       "Bash(for f:*)",
       "Bash(do sed:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git rm:*)",
+      "Bash(ls /c/Users/rabin/Desktop/cairn/apps/api/.env*)",
+      "Bash(ls /c/Users/rabin/Desktop/cairn/apps/web/.env*)",
+      "Bash(people who understand your context...\"\\), tags fill in as criteria:*)"
     ]
   }
 }

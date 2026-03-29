@@ -31,6 +31,7 @@ interface Profile {
   journal_streak: number;
   primary_burden: string;
   current_persona: string;
+  current_stress_level: number | null;
 }
 
 function getGreeting(): string {
@@ -112,6 +113,38 @@ export function HomeClient({
           </motion.div>
         </div>
       </motion.div>
+
+      {/* Crisis banner — shows when stress is high */}
+      {(profile.current_stress_level ?? 0) >= 7 && (
+        <motion.div
+          variants={fadeUp}
+          className="mx-6 mt-4 p-4 rounded-2xl border"
+          style={{
+            backgroundColor: "rgba(212,132,90,0.08)",
+            borderColor: "rgba(212,132,90,0.2)",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: "rgba(212,132,90,0.15)" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D4845A" strokeWidth="2" strokeLinecap="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-[13px] font-semibold mb-1" style={{ color: "#D4845A" }}>
+                We noticed something heavy
+              </p>
+              <p className="text-[12px] leading-[1.6]" style={{ color: "#8B7E74" }}>
+                If you need support right now, you&apos;re not alone.{" "}
+                <a href="tel:988" className="underline font-medium" style={{ color: "#D4845A" }}>
+                  988 Lifeline
+                </a>{" "}
+                is free, 24/7.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Streak */}
       <motion.div variants={fadeUp} className="mx-6 mt-4 bg-white rounded-2xl px-5 py-4 flex items-center gap-[14px] shadow-[0_2px_12px_rgba(44,40,37,0.04)] border border-[#E8DFD3]/50">
