@@ -18,9 +18,16 @@ Prerequisites:
 from __future__ import annotations
 
 import os
+import sys
 import time
 from datetime import datetime, timezone
 from typing import Any
+from pathlib import Path
+
+# Allow running this file directly: `py tests/test_cluster_and_circle_flow.py`
+ROOT_DIR = Path(__file__).resolve().parents[1]
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
 from auth import supabase
 from db.circle_store import CircleStore
@@ -33,6 +40,21 @@ REQUESTER_USER_ID = os.getenv("CAIRN_REQUESTER_USER_ID")
 
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _to_timestamptz(value: Any) -> str:
+    """Normalize epoch/iso/None into an ISO-8601 UTC timestamp string."""
+    if value is None:
+        return _now_iso()
+
+    if isinstance(value, (int, float)):
+        return datetime.fromtimestamp(float(value), tz=timezone.utc).isoformat()
+
+    if isinstance(value, str):
+        # Already timestamp-like; keep as is.
+        return value
+
+    return _now_iso()
 
 
 def _assert(condition: bool, message: str) -> None:
@@ -79,7 +101,7 @@ def _sync_persona_payload_to_user_personas(row: dict[str, Any]) -> None:
         "stressor_dist": payload.get("stressor_dist", []),
         "cluster_id": payload.get("cluster_id"),
         "entry_count": int(payload.get("entry_count", 0)),
-        "last_entry_at": payload.get("last_entry_time", time.time()),
+        "last_entry_at": _to_timestamptz(payload.get("last_entry_time")),
         "is_available": bool(payload.get("is_available", False)),
         "updated_at": _now_iso(),
     }

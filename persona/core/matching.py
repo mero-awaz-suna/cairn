@@ -26,9 +26,9 @@ from typing import Optional
 
 import numpy as np
 
-from core.config import CONFIG
-from core.models import Circle, CircleMember, Stage, UserPersona
-from core.utils import cosine_similarity, clip_normalize
+from .config import CONFIG
+from .models import Circle, CircleMember, Stage, UserPersona
+from .utils import cosine_similarity, clip_normalize
 
 logger = logging.getLogger(__name__)
 
@@ -232,9 +232,23 @@ def assign_clusters(
         return {p.user_id: "default_pool" for p in personas}
 
     X = np.stack([build_cluster_input(p) for p in personas])
-    labels = hdbscan.HDBSCAN(
-        min_cluster_size=min_cluster_size, metric="cosine"
-    ).fit_predict(X)
+
+    try:
+        labels = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size, metric="cosine"
+        ).fit_predict(X)
+    except ValueError as exc:
+        # Some sklearn/hdbscan builds on Windows reject 'cosine' in BallTree.
+        # Fallback: L2-normalize vectors and use euclidean, which approximates
+        # cosine neighborhoods for clustering purposes.
+        if "Unrecognized metric 'cosine'" not in str(exc):
+            raise
+
+        norms = np.linalg.norm(X, axis=1, keepdims=True) + 1e-9
+        Xn = X / norms
+        labels = hdbscan.HDBSCAN(
+            min_cluster_size=min_cluster_size, metric="euclidean"
+        ).fit_predict(Xn)
 
     logger.info(
         "Clustering: %d users → %d clusters",

@@ -158,6 +158,8 @@ class PersonaStore:
             "cluster_id": persona.cluster_id,
             "current_persona": self._stage_to_legacy_persona(persona.stage.current),
             "persona_confidence": float(persona.stage.confidence),
+            "trajectory_stress": float(persona.trajectory_stress),
+            "trajectory_recovery": float(persona.trajectory_recovery),
         }
 
         if result is not None:
@@ -175,9 +177,22 @@ class PersonaStore:
 
             user_update["last_journal_at"] = self._now_iso()
 
-        self.client.table(self.users_table).update(user_update).eq(
-            "id", persona.user_id
-        ).execute()
+        try:
+            self.client.table(self.users_table).update(user_update).eq(
+                "id", persona.user_id
+            ).execute()
+        except Exception as exc:
+            # Keep persona persistence resilient if optional columns do not exist.
+            logger.warning(
+                "users sync with trajectory fields failed for user=%s: %s; retrying base fields",
+                persona.user_id,
+                exc,
+            )
+            user_update.pop("trajectory_stress", None)
+            user_update.pop("trajectory_recovery", None)
+            self.client.table(self.users_table).update(user_update).eq(
+                "id", persona.user_id
+            ).execute()
 
     def _insert_history_row(self, persona: UserPersona, result: Any) -> None:
         stage_scores = getattr(result, "stage_scores", None)

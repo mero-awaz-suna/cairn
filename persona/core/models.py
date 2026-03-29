@@ -404,6 +404,7 @@ class Circle:
     circle_id: str
     members: list[CircleMember]
     requester_id: str
+    requester_stressor_dist: Optional[np.ndarray] = None
     created_at: float = field(default_factory=time.time)
 
     @property
