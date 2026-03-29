@@ -14,7 +14,18 @@
       "Bash(gh auth:*)",
       "Bash(gh repo:*)",
       "Bash(git remote:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(ls -la apps/web/src/app/\\\\\\(protected\\\\\\)/)",
+      "Bash(ls \"apps/web/src/app/\\(protected\\)/\")",
+      "Bash(pnpm --filter @cairn/web build)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(find /c/Users/rabin/Desktop/cairn -name tailwind.config.* -type f)",
+      "Bash(pnpm --filter @cairn/web add framer-motion)",
+      "Bash(for f:*)",
+      "Bash(do sed:*)",
+      "Bash(done)"
     ]
   }
 }

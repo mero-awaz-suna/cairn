@@ -67,13 +67,19 @@ export default async function ProfilePage() {
     : "Never";
 
   return (
-    <div className="min-h-screen bg-warm-cream pb-28">
+    <div className="min-h-screen pb-28" style={{ backgroundColor: "#F5F0EA" }}>
       {/* Status bar */}
       <div className="h-[52px] flex-shrink-0" />
 
       {/* ── Profile Header (Moss gradient with curved edge) ── */}
-      <div className="bg-gradient-to-br from-moss to-moss-deep px-6 pt-5 pb-12 text-center relative overflow-hidden">
-        <div className="absolute bottom-[-30px] left-[-20px] right-[-20px] h-[60px] bg-warm-cream rounded-[50%_50%_0_0]" />
+      <div
+        className="px-6 pt-5 pb-12 text-center relative overflow-hidden"
+        style={{ background: "linear-gradient(to bottom right, #6B8F71, #5A7D60)" }}
+      >
+        <div
+          className="absolute left-[-20px] right-[-20px] h-[60px] rounded-[50%_50%_0_0]"
+          style={{ bottom: -30, backgroundColor: "#F5F0EA" }}
+        />
 
         {/* Settings gear — top right */}
         <a href="/settings" className="absolute top-5 right-6 w-9 h-9 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors duration-200 z-10">
@@ -105,19 +111,20 @@ export default async function ProfilePage() {
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-white rounded-[10px] py-4 px-3 text-center shadow-[0_2px_12px_rgba(44,40,37,0.05)]"
+              className="bg-white rounded-[10px] py-4 px-3 text-center"
+              style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}
             >
-              <div className="font-display text-[24px] text-stone">{stat.num}</div>
-              <div className="text-[11px] text-dusk font-medium mt-[2px]">{stat.label}</div>
+              <div className="font-display text-[24px]" style={{ color: "#2C2825" }}>{stat.num}</div>
+              <div className="text-[11px] font-medium mt-[2px]" style={{ color: "#8B7E74" }}>{stat.label}</div>
             </div>
           ))}
         </div>
 
         {/* 30-Day Arc */}
         {personaHistory && personaHistory.length > 0 && (
-          <div className="bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] mb-4">
-            <div className="text-[13px] font-bold text-stone mb-3 flex items-center gap-[6px]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="bg-white rounded-[16px] p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}>
+            <div className="text-[13px] font-bold mb-3 flex items-center gap-[6px]" style={{ color: "#2C2825" }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
               </svg>
               Your 30-day arc
@@ -125,50 +132,51 @@ export default async function ProfilePage() {
             <div className="flex items-end gap-[3px] h-8">
               {personaHistory.map((entry, i) => {
                 const color =
-                  entry.persona === "storm" ? "bg-ember"
-                    : entry.persona === "through_it" ? "bg-moss"
-                    : "bg-sand";
+                  entry.persona === "storm" ? "#D4845A"
+                    : entry.persona === "through_it" ? "#6B8F71"
+                    : "#E8DFD3";
                 return (
                   <div
                     key={i}
-                    className={`w-2 h-2 rounded-full ${color}`}
+                    className="w-2 h-2 rounded-full"
+                    style={{ backgroundColor: color }}
                     title={`${entry.persona} — ${new Date(entry.recorded_at).toLocaleDateString()}`}
                   />
                 );
               })}
             </div>
             <div className="flex justify-between mt-2">
-              <span className="text-[10px] text-cloud">30 days ago</span>
-              <span className="text-[10px] text-cloud">Today</span>
+              <span className="text-[10px]" style={{ color: "#C9BFB2" }}>30 days ago</span>
+              <span className="text-[10px]" style={{ color: "#C9BFB2" }}>Today</span>
             </div>
           </div>
         )}
 
         {/* Today's Persona */}
-        <div className="bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] mb-4">
-          <div className="text-[13px] font-bold text-stone mb-[14px] flex items-center gap-[6px]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="bg-white rounded-[16px] p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}>
+          <div className="text-[13px] font-bold mb-[14px] flex items-center gap-[6px]" style={{ color: "#2C2825" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <path d="M12 16v-4" />
               <path d="M12 8h.01" />
             </svg>
             Your Persona
           </div>
-          <div className="flex items-center gap-3 bg-[var(--moss-glow)] rounded-[10px] px-4 py-[14px]">
-            <div className="w-9 h-9 rounded-[10px] bg-moss flex items-center justify-center text-[16px] flex-shrink-0">
+          <div className="flex items-center gap-3 rounded-[10px] px-4 py-[14px]" style={{ backgroundColor: "rgba(107,143,113,0.18)" }}>
+            <div className="w-9 h-9 rounded-[10px] flex items-center justify-center text-[16px] flex-shrink-0" style={{ backgroundColor: "#6B8F71" }}>
               {emoji}
             </div>
             <div>
-              <h4 className="text-[14px] font-semibold text-stone">{label}</h4>
-              <p className="text-[12px] text-dusk font-normal">{desc}</p>
+              <h4 className="text-[14px] font-semibold" style={{ color: "#2C2825" }}>{label}</h4>
+              <p className="text-[12px] font-normal" style={{ color: "#8B7E74" }}>{desc}</p>
             </div>
           </div>
         </div>
 
         {/* Burdens Dropped */}
-        <div className="bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] mb-4">
-          <div className="text-[13px] font-bold text-stone mb-[14px] flex items-center gap-[6px]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="bg-white rounded-[16px] p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}>
+          <div className="text-[13px] font-bold mb-[14px] flex items-center gap-[6px]" style={{ color: "#2C2825" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2v20M2 12h20" />
             </svg>
             Burdens dropped
@@ -177,50 +185,59 @@ export default async function ProfilePage() {
             <div className="space-y-3">
               {burdenDrops.map((drop) => (
                 <div key={drop.id} className="flex items-center justify-between">
-                  <span className="text-[13px] text-dusk font-light">
+                  <span className="text-[13px] font-light" style={{ color: "#8B7E74" }}>
                     {drop.extracted_theme.replace(/_/g, " ")}
                   </span>
-                  <span className="text-[12px] text-cloud">
+                  <span className="text-[12px]" style={{ color: "#C9BFB2" }}>
                     {getRelativeDate(drop.created_at)}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-[13px] text-dusk font-light">
+            <p className="text-[13px] font-light" style={{ color: "#8B7E74" }}>
               When you drop a burden, it shows up here — with how many others are carrying the same weight.
             </p>
           )}
         </div>
 
         {/* Matching Context Tags */}
-        <div className="bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] mb-4">
-          <div className="text-[13px] font-bold text-stone mb-[14px] flex items-center gap-[6px]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="bg-white rounded-[16px] p-5 mb-4" style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}>
+          <div className="text-[13px] font-bold mb-[14px] flex items-center gap-[6px]" style={{ color: "#2C2825" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
               <line x1="7" x2="7.01" y1="7" y2="7" />
             </svg>
             Matching Context
           </div>
           <div className="flex flex-wrap gap-[6px]">
-            <span className="bg-[var(--ember-glow)] text-ember text-[12px] font-medium px-3 py-[5px] rounded-full">
+            <span
+              className="text-[12px] font-medium px-3 py-[5px] rounded-full"
+              style={{ backgroundColor: "rgba(212,132,90,0.18)", color: "#D4845A" }}
+            >
               {BURDEN_DISPLAY[profile.primary_burden] || profile.primary_burden}
             </span>
             {profile.cultural_context && (
-              <span className="bg-[var(--moss-glow)] text-moss text-[12px] font-medium px-3 py-[5px] rounded-full">
+              <span
+                className="text-[12px] font-medium px-3 py-[5px] rounded-full"
+                style={{ backgroundColor: "rgba(107,143,113,0.18)", color: "#6B8F71" }}
+              >
                 {profile.cultural_context}
               </span>
             )}
-            <span className="bg-[rgba(90,143,212,0.1)] text-blue-soft text-[12px] font-medium px-3 py-[5px] rounded-full">
+            <span
+              className="text-[12px] font-medium px-3 py-[5px] rounded-full"
+              style={{ backgroundColor: "rgba(90,143,212,0.1)", color: "#5A8FD4" }}
+            >
               {profile.academic_stage?.replace(/_/g, " ")}
             </span>
           </div>
         </div>
 
         {/* Circles summary */}
-        <div className="bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] mb-6">
-          <div className="text-[13px] font-bold text-stone mb-[14px] flex items-center gap-[6px]">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <div className="bg-white rounded-[16px] p-5 mb-6" style={{ boxShadow: "0 2px 12px rgba(44,40,37,0.05)" }}>
+          <div className="text-[13px] font-bold mb-[14px] flex items-center gap-[6px]" style={{ color: "#2C2825" }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="9" cy="7" r="4" />
               <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
@@ -228,7 +245,7 @@ export default async function ProfilePage() {
             </svg>
             Circles
           </div>
-          <p className="text-[13px] text-dusk font-light">
+          <p className="text-[13px] font-light" style={{ color: "#8B7E74" }}>
             {profile.circles_joined > 0
               ? `${profile.circles_joined} circle${profile.circles_joined > 1 ? "s" : ""}. You've shown up for others — and they've shown up for you.`
               : "You haven't been in a circle yet. The center button will find you the right one."}

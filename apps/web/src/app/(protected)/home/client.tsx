@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 
 const JOURNAL_PROMPTS = [
   "What's present today?",
@@ -12,17 +13,8 @@ const JOURNAL_PROMPTS = [
   "What would you tell someone standing exactly where you are?",
 ];
 
-const PERSONA_EMOJI: Record<string, string> = {
-  storm: "🌊",
-  ground: "🌱",
-  through_it: "🌿",
-};
-
-const PERSONA_LABEL: Record<string, string> = {
-  storm: "In the storm",
-  ground: "Finding ground",
-  through_it: "Through it",
-};
+const PERSONA_EMOJI: Record<string, string> = { storm: "🌊", ground: "🌱", through_it: "🌿" };
+const PERSONA_LABEL: Record<string, string> = { storm: "In the storm", ground: "Finding ground", through_it: "Through it" };
 
 interface Entry {
   id: string;
@@ -43,9 +35,9 @@ interface Profile {
 
 function getGreeting(): string {
   const h = new Date().getHours();
-  if (h < 12) return "Good morning,";
-  if (h < 17) return "Good afternoon,";
-  return "Good evening,";
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 function getSubtext(burden: string): string {
@@ -69,17 +61,18 @@ function getRelativeTime(dateStr: string): string {
   const days = Math.floor(diff / 86400000);
   if (days === 0) return "Today";
   if (days === 1) return "Yesterday";
-  return `${days} days ago`;
+  return `${days}d ago`;
 }
 
-function getDurationStr(transcriptionMs: number | null, aiMs: number | null): string {
-  const totalMs = (transcriptionMs || 0) + (aiMs || 0);
-  if (totalMs <= 0) return "";
-  const secs = Math.round(totalMs / 1000);
-  const mins = Math.floor(secs / 60);
-  const remSecs = secs % 60;
-  return `${mins}:${String(remSecs).padStart(2, "0")}`;
-}
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.07 } },
+};
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const } },
+};
 
 export function HomeClient({
   displayName,
@@ -94,184 +87,161 @@ export function HomeClient({
   const streak = profile.journal_streak;
 
   return (
-    <>
-      {/* Status bar spacer */}
+    <motion.div initial="hidden" animate="visible" variants={stagger}>
       <div className="h-[52px] flex-shrink-0" />
 
-      {/* ── Greeting ── */}
-      <div className="px-6 animate-[cardEnter_450ms_var(--ease-enter)_both]">
+      {/* Greeting */}
+      <motion.div variants={fadeUp} className="px-6">
         <div className="flex justify-between items-center mb-1">
           <div>
-            <h2 className="font-display text-[26px] text-stone leading-[1.2]">
+            <h2
+              className="text-[26px] text-[#2C2825] leading-[1.2]"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               {getGreeting()}
             </h2>
-            <p className="text-[14px] text-dusk font-normal mt-[2px]">
+            <p className="text-[14px] text-[#8B7E74] font-normal mt-[2px]">
               {getSubtext(profile.primary_burden)}
             </p>
           </div>
-          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[var(--moss-glow)] to-[var(--ember-glow)] border-2 border-moss flex items-center justify-center text-[14px] flex-shrink-0">
+          <motion.div
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            className="w-10 h-10 rounded-full bg-gradient-to-br from-[rgba(107,143,113,0.15)] to-[rgba(212,132,90,0.15)] border-2 border-[#6B8F71] flex items-center justify-center text-[15px] flex-shrink-0"
+          >
             {PERSONA_EMOJI[profile.current_persona] || "🌿"}
-          </div>
+          </motion.div>
         </div>
-      </div>
+      </motion.div>
 
-      {/* ── Streak Card ── */}
-      <div
-        className="mx-6 mt-4 bg-white rounded-[16px] px-5 py-4 flex items-center gap-[14px] shadow-[0_2px_12px_rgba(44,40,37,0.05)]"
-        style={{ animation: "cardEnter 450ms var(--ease-enter) 80ms both" }}
-      >
-        <span className="text-[28px]">🔥</span>
+      {/* Streak */}
+      <motion.div variants={fadeUp} className="mx-6 mt-4 bg-white rounded-2xl px-5 py-4 flex items-center gap-[14px] shadow-[0_2px_12px_rgba(44,40,37,0.04)] border border-[#E8DFD3]/50">
+        <span className="text-[26px]">🔥</span>
         <div className="flex-1 min-w-0">
-          <h4 className="text-[15px] font-bold text-stone">
+          <h4 className="text-[15px] font-bold text-[#2C2825]">
             {streak > 0 ? `${streak}-day streak` : "Start your streak"}
           </h4>
-          <p className="text-[12px] text-dusk font-normal">
-            {streak > 0
-              ? "You're building a beautiful habit"
-              : "Your first entry starts the count"}
+          <p className="text-[12px] text-[#8B7E74]">
+            {streak > 0 ? "You're building a beautiful habit" : "Your first entry starts the count"}
           </p>
         </div>
         <div className="flex gap-1 flex-shrink-0">
           {[...Array(7)].map((_, i) => (
-            <div
+            <motion.div
               key={i}
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.5 + i * 0.06, duration: 0.3, ease: [0.34, 1.56, 0.64, 1] as const }}
               className={`w-2 h-2 rounded-full ${
                 i < Math.min(streak, 7)
-                  ? "bg-moss"
+                  ? "bg-[#6B8F71]"
                   : i === Math.min(streak, 7)
-                    ? "bg-sand animate-[dotPulse_2s_infinite]"
-                    : "bg-sand"
+                    ? "bg-[#E8DFD3]"
+                    : "bg-[#E8DFD3]"
               }`}
             />
           ))}
         </div>
-      </div>
+      </motion.div>
 
-      {/* ── Journal Prompt Card (Moss gradient) ── */}
-      <div
-        className="mx-6 mt-5 bg-gradient-to-br from-moss to-moss-deep rounded-[16px] p-6 px-5 text-white relative overflow-hidden"
-        style={{ animation: "cardEnter 450ms var(--ease-enter) 160ms both" }}
-      >
-        {/* Decorative glow */}
-        <div className="absolute -top-5 -right-5 w-[100px] h-[100px] bg-[radial-gradient(circle,rgba(255,255,255,0.1),transparent_70%)] rounded-full" />
-
-        <h3 className="font-display text-[18px] mb-[6px] relative z-10">
-          {todayPrompt}
-        </h3>
-        <p className="text-[13px] opacity-85 font-light mb-4 leading-[1.5] relative z-10">
-          Speak or type — this is the one place the performance stops.
-        </p>
-
-        <Link
-          href="/record"
-          className="relative z-10 inline-flex items-center gap-2 bg-white/20 backdrop-blur-[10px] border border-white/25 rounded-full px-5 py-[10px] text-white text-[13px] font-semibold hover:bg-white/30 active:scale-[0.97] transition-all duration-300"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#ff6b6b] animate-[blink_1.5s_infinite]" />
-          Record voice note
+      {/* Journal Prompt */}
+      <motion.div variants={fadeUp} className="mx-6 mt-5">
+        <Link href="/record">
+          <motion.div
+            whileHover={{ y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-gradient-to-br from-[#6B8F71] to-[#5A7D60] rounded-2xl p-6 text-white relative overflow-hidden cursor-pointer"
+          >
+            <div className="absolute -top-5 -right-5 w-[120px] h-[120px] bg-[radial-gradient(circle,rgba(255,255,255,0.08),transparent_70%)] rounded-full" />
+            <h3
+              className="text-[18px] mb-[6px] relative z-10"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              {todayPrompt}
+            </h3>
+            <p className="text-[13px] opacity-80 font-light mb-4 leading-[1.55] relative z-10">
+              Speak or type — this is the one place the performance stops.
+            </p>
+            <span className="relative z-10 inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm border border-white/20 rounded-full px-5 py-[10px] text-white text-[13px] font-semibold">
+              <span className="w-2 h-2 rounded-full bg-[#ff6b6b] animate-[blink_1.5s_infinite]" />
+              Record voice note
+            </span>
+          </motion.div>
         </Link>
-      </div>
+      </motion.div>
 
-      {/* ── Quick Actions ── */}
-      <div
-        className="mx-6 mt-4 flex gap-3"
-        style={{ animation: "cardEnter 450ms var(--ease-enter) 200ms both" }}
-      >
-        <Link
-          href="/drop"
-          className="flex-1 bg-white rounded-[16px] px-4 py-4 shadow-[0_2px_12px_rgba(44,40,37,0.05)] hover:-translate-y-[1px] hover:shadow-[0_6px_24px_rgba(44,40,37,0.08)] active:scale-[0.97] transition-all duration-300 text-center"
-        >
-          <span className="block text-[20px] mb-1">🪨</span>
-          <span className="text-[12px] font-semibold text-stone">Drop a burden</span>
-        </Link>
-        <Link
-          href="/circle"
-          className="flex-1 bg-white rounded-[16px] px-4 py-4 shadow-[0_2px_12px_rgba(44,40,37,0.05)] hover:-translate-y-[1px] hover:shadow-[0_6px_24px_rgba(44,40,37,0.08)] active:scale-[0.97] transition-all duration-300 text-center"
-        >
-          <span className="block text-[20px] mb-1">🤝</span>
-          <span className="text-[12px] font-semibold text-stone">Find a circle</span>
-        </Link>
-        <Link
-          href="/echoes"
-          className="flex-1 bg-white rounded-[16px] px-4 py-4 shadow-[0_2px_12px_rgba(44,40,37,0.05)] hover:-translate-y-[1px] hover:shadow-[0_6px_24px_rgba(44,40,37,0.08)] active:scale-[0.97] transition-all duration-300 text-center"
-        >
-          <span className="block text-[20px] mb-1">🌿</span>
-          <span className="text-[12px] font-semibold text-stone">Memory Wall</span>
-        </Link>
-      </div>
+      {/* Quick Actions */}
+      <motion.div variants={fadeUp} className="mx-6 mt-4 flex gap-3">
+        {[
+          { href: "/drop", emoji: "🪨", label: "Drop a burden" },
+          { href: "/circle", emoji: "🤝", label: "Find a circle" },
+          { href: "/echoes", emoji: "🌿", label: "Memory Wall" },
+        ].map((action, i) => (
+          <Link key={action.href} href={action.href} className="flex-1">
+            <motion.div
+              whileHover={{ y: -3 }}
+              whileTap={{ scale: 0.96 }}
+              className="bg-white rounded-2xl px-4 py-4 shadow-[0_2px_12px_rgba(44,40,37,0.03)] border border-[#E8DFD3]/50 text-center cursor-pointer"
+            >
+              <span className="block text-[20px] mb-1">{action.emoji}</span>
+              <span className="text-[11px] font-semibold text-[#2C2825]">{action.label}</span>
+            </motion.div>
+          </Link>
+        ))}
+      </motion.div>
 
-      {/* ── Past Entries ── */}
-      <div
-        className="px-6 pt-6 pb-3 flex justify-between items-center"
-        style={{ animation: "cardEnter 450ms var(--ease-enter) 280ms both" }}
-      >
-        <h3 className="text-[16px] font-bold text-stone">Recent entries</h3>
-        {entries.length > 0 && (
-          <span className="text-[13px] text-moss font-semibold cursor-pointer">
-            See all
-          </span>
-        )}
-      </div>
+      {/* Past Entries */}
+      <motion.div variants={fadeUp} className="px-6 pt-6 pb-3 flex justify-between items-center">
+        <h3 className="text-[16px] font-bold text-[#2C2825]">Recent entries</h3>
+      </motion.div>
 
       {entries.length > 0 ? (
-        <div className="space-y-[10px] px-0">
+        <div className="space-y-[8px]">
           {entries.map((entry, i) => {
             const emoji = PERSONA_EMOJI[entry.assigned_persona] || "🌱";
             const label = PERSONA_LABEL[entry.assigned_persona] || "Finding ground";
             const stressLabel = getStressLabel(entry.stress_level);
             const moodBg =
               entry.assigned_persona === "storm"
-                ? "bg-[var(--ember-glow)]"
+                ? "bg-[rgba(212,132,90,0.12)]"
                 : entry.assigned_persona === "through_it"
-                  ? "bg-[var(--moss-glow)]"
-                  : "bg-[rgba(90,143,212,0.12)]";
-            const duration = getDurationStr(entry.transcription_ms, entry.ai_processing_ms);
+                  ? "bg-[rgba(107,143,113,0.12)]"
+                  : "bg-[rgba(90,143,212,0.1)]";
 
             return (
-              <div
+              <motion.div
                 key={entry.id}
-                className="mx-6 bg-white rounded-[10px] px-4 py-[14px] flex items-center gap-3 shadow-[0_1px_6px_rgba(44,40,37,0.04)] hover:translate-x-[3px] transition-all duration-200 cursor-pointer"
-                style={{ animation: `cardEnter 400ms var(--ease-enter) ${300 + i * 80}ms both` }}
+                variants={fadeUp}
+                whileHover={{ x: 3 }}
+                className="mx-6 bg-white rounded-xl px-4 py-[14px] flex items-center gap-3 shadow-[0_1px_4px_rgba(44,40,37,0.03)] border border-[#E8DFD3]/40 cursor-pointer"
               >
-                <div className={`w-[38px] h-[38px] rounded-[12px] flex items-center justify-center text-[18px] flex-shrink-0 ${moodBg}`}>
+                <div className={`w-[38px] h-[38px] rounded-xl flex items-center justify-center text-[17px] flex-shrink-0 ${moodBg}`}>
                   {emoji}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h4 className="text-[14px] font-semibold text-stone truncate">
-                    {label}
-                  </h4>
-                  <p className="text-[12px] text-dusk font-normal">
+                  <h4 className="text-[14px] font-semibold text-[#2C2825] truncate">{label}</h4>
+                  <p className="text-[12px] text-[#8B7E74]">
                     {getRelativeTime(entry.created_at)} · Stress: {stressLabel}
                   </p>
                 </div>
-                {duration && (
-                  <span className="text-[11px] text-cloud font-medium flex-shrink-0">
-                    {duration}
-                  </span>
-                )}
-              </div>
+              </motion.div>
             );
           })}
         </div>
       ) : (
-        /* Empty state */
-        <div
-          className="mx-6 bg-white rounded-[16px] p-8 shadow-[0_1px_6px_rgba(44,40,37,0.04)] text-center"
-          style={{ animation: "cardEnter 450ms var(--ease-enter) 300ms both" }}
-        >
-          <div className="w-12 h-12 mx-auto rounded-full bg-[var(--moss-soft)] flex items-center justify-center mb-4">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <motion.div variants={fadeUp} className="mx-6 bg-white rounded-2xl p-8 shadow-[0_1px_6px_rgba(44,40,37,0.03)] border border-[#E8DFD3]/50 text-center">
+          <div className="w-12 h-12 mx-auto rounded-full bg-[rgba(107,143,113,0.08)] flex items-center justify-center mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
               <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
               <line x1="12" x2="12" y1="19" y2="22" />
             </svg>
           </div>
-          <p className="text-[14px] text-dusk font-light leading-[1.6]">
-            Your journal is waiting for its first entry.
-            <br />
+          <p className="text-[14px] text-[#8B7E74] font-light leading-[1.6]">
+            Your journal is waiting for its first entry.<br />
             It doesn&apos;t have to be about anything in particular.
           </p>
-        </div>
+        </motion.div>
       )}
-    </>
+    </motion.div>
   );
 }

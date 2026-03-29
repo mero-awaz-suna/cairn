@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { incrementHelped } from "../actions";
 
 interface Memory {
@@ -45,6 +46,21 @@ function getRelativeTime(dateStr: string): string {
   return `${Math.floor(days / 30)} month${Math.floor(days / 30) > 1 ? "s" : ""} ago`;
 }
 
+const cardVariants = {
+  initial: { opacity: 0, y: 20, scale: 0.97 },
+  animate: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      duration: 0.4,
+      delay: i * 0.08,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  }),
+  exit: { opacity: 0, y: -10, scale: 0.97, transition: { duration: 0.2 } },
+};
+
 export function EchoesClient({ memories }: { memories: Memory[] }) {
   const [activeFilter, setActiveFilter] = useState("All");
   const [helped, setHelped] = useState<Set<string>>(new Set());
@@ -69,122 +85,148 @@ export function EchoesClient({ memories }: { memories: Memory[] }) {
       <div className="h-[52px] flex-shrink-0" />
 
       {/* Header */}
-      <div className="px-6 animate-[cardEnter_450ms_var(--ease-enter)_both]">
-        <h2 className="font-display text-[24px] text-stone mb-1">Memory Wall</h2>
-        <p className="text-[13px] text-dusk font-light">
+      <motion.div
+        className="px-6"
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] as const }}
+      >
+        <h2 className="font-display text-[24px] mb-1" style={{ color: "#2C2825" }}>Memory Wall</h2>
+        <p className="text-[13px] font-light" style={{ color: "#8B7E74" }}>
           Echoes from past circles — what helped, what gave hope
         </p>
-      </div>
+      </motion.div>
 
       {/* Filter pills — horizontal scroll, no scrollbar */}
       <div className="flex gap-2 px-6 py-4 overflow-x-auto hide-scrollbar">
         {FILTERS.map((filter) => (
-          <button
+          <motion.button
             key={filter}
             onClick={() => setActiveFilter(filter)}
-            className={`flex-shrink-0 rounded-full px-[14px] py-[6px] text-[12px] font-medium transition-all duration-200 ${
+            className="flex-shrink-0 rounded-full px-[14px] py-[6px] text-[12px] font-medium transition-colors duration-200"
+            style={
               activeFilter === filter
-                ? "bg-moss border border-moss text-white"
-                : "bg-white border border-sand text-dusk hover:border-cloud-light"
-            }`}
+                ? { backgroundColor: "#6B8F71", borderWidth: 1, borderStyle: "solid", borderColor: "#6B8F71", color: "#FFFFFF" }
+                : { backgroundColor: "#FFFFFF", borderWidth: 1, borderStyle: "solid", borderColor: "#E8DFD3", color: "#8B7E74" }
+            }
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
             {filter}
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Memory Cards */}
       <div className="px-6 pb-4 space-y-3">
-        {filteredMemories.length > 0 ? (
-          filteredMemories.map((memory, i) => {
-            const displayTag = (TAG_TO_DISPLAY[memory.burden_tag] || memory.burden_tag).toUpperCase();
-            const isUserSubmitted = memory.source_type === "user_submitted";
-            const isHelped = helped.has(memory.id);
-            const count = memory.helped_count + (isHelped ? 1 : 0);
+        <AnimatePresence mode="popLayout">
+          {filteredMemories.length > 0 ? (
+            filteredMemories.map((memory, i) => {
+              const displayTag = (TAG_TO_DISPLAY[memory.burden_tag] || memory.burden_tag).toUpperCase();
+              const isUserSubmitted = memory.source_type === "user_submitted";
+              const isHelped = helped.has(memory.id);
+              const count = memory.helped_count + (isHelped ? 1 : 0);
 
-            return (
-              <div
-                key={memory.id}
-                className={`bg-white rounded-[16px] p-5 shadow-[0_2px_12px_rgba(44,40,37,0.05)] border-l-[3px] border-moss hover:-translate-y-[2px] hover:shadow-[0_6px_24px_rgba(44,40,37,0.08)] transition-all duration-300 ${
-                  i === 0 ? "shadow-[0_6px_24px_rgba(44,40,37,0.08)] p-6" : ""
-                }`}
-                style={{
-                  animation: `cardEnter 400ms var(--ease-enter) ${i * 80}ms both`,
-                }}
-              >
-                {/* Header */}
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-moss bg-[var(--moss-glow)] px-2 py-[3px] rounded-[4px]">
-                    {displayTag}
-                  </span>
-                  <span className="text-[11px] text-cloud font-normal">
-                    {getRelativeTime(memory.created_at)}
-                  </span>
-                </div>
-
-                {/* Quote — Caveat for user-submitted, Nunito for seeds */}
-                {isUserSubmitted ? (
-                  <p className="font-hand text-[17px] text-stone leading-[1.5] mb-1">
-                    &ldquo;{memory.quote_text}&rdquo;
-                  </p>
-                ) : (
-                  <>
-                    <h4 className="text-[15px] font-semibold text-stone leading-[1.4] mb-[6px]">
-                      &ldquo;{memory.quote_text.split(" — ")[0]}&rdquo;
-                    </h4>
-                    {memory.quote_text.includes(" — ") && (
-                      <p className="text-[13px] text-dusk font-light leading-[1.6]">
-                        {memory.quote_text.split(" — ").slice(1).join(" — ")}
-                      </p>
-                    )}
-                  </>
-                )}
-
-                {/* Footer — helped reaction */}
-                <div className="mt-3">
-                  <button
-                    onClick={() => handleHelped(memory.id)}
-                    className={`inline-flex items-center gap-[4px] text-[12px] cursor-pointer transition-colors duration-200 ${
-                      isHelped ? "text-moss" : "text-dusk hover:text-moss"
-                    }`}
-                  >
+              return (
+                <motion.div
+                  key={memory.id}
+                  custom={i}
+                  variants={cardVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                  layout
+                  className="bg-white rounded-[16px] p-5 transition-shadow duration-300"
+                  style={{
+                    boxShadow: i === 0 ? "0 6px 24px rgba(44,40,37,0.08)" : "0 2px 12px rgba(44,40,37,0.05)",
+                    borderLeft: "3px solid #6B8F71",
+                    padding: i === 0 ? "24px" : undefined,
+                  }}
+                  whileHover={{ y: -2, boxShadow: "0 6px 24px rgba(44,40,37,0.08)" }}
+                >
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-2">
                     <span
-                      className={`transition-transform duration-200 ${
-                        isHelped ? "scale-[1.3]" : ""
-                      }`}
-                      style={{
-                        display: "inline-block",
-                        transition: "transform 200ms cubic-bezier(0.34,1.56,0.64,1)",
-                      }}
+                      className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-[3px] rounded-[4px]"
+                      style={{ color: "#6B8F71", backgroundColor: "rgba(107,143,113,0.18)" }}
                     >
-                      🌱
+                      {displayTag}
                     </span>
-                    {count} found this helpful
-                  </button>
-                </div>
+                    <span className="text-[11px] font-normal" style={{ color: "#C9BFB2" }}>
+                      {getRelativeTime(memory.created_at)}
+                    </span>
+                  </div>
 
-                {/* "for you" indicator on first card */}
-                {i === 0 && (
-                  <p className="mt-2 text-[11px] text-dusk font-normal italic">
-                    — for you
-                  </p>
-                )}
+                  {/* Quote — Caveat for user-submitted, Nunito for seeds */}
+                  {isUserSubmitted ? (
+                    <p className="font-hand text-[17px] leading-[1.5] mb-1" style={{ color: "#2C2825" }}>
+                      &ldquo;{memory.quote_text}&rdquo;
+                    </p>
+                  ) : (
+                    <>
+                      <h4 className="text-[15px] font-semibold leading-[1.4] mb-[6px]" style={{ color: "#2C2825" }}>
+                        &ldquo;{memory.quote_text.split(" — ")[0]}&rdquo;
+                      </h4>
+                      {memory.quote_text.includes(" — ") && (
+                        <p className="text-[13px] font-light leading-[1.6]" style={{ color: "#8B7E74" }}>
+                          {memory.quote_text.split(" — ").slice(1).join(" — ")}
+                        </p>
+                      )}
+                    </>
+                  )}
+
+                  {/* Footer — helped reaction */}
+                  <div className="mt-3">
+                    <motion.button
+                      onClick={() => handleHelped(memory.id)}
+                      className="inline-flex items-center gap-[4px] text-[12px] cursor-pointer"
+                      style={{ color: isHelped ? "#6B8F71" : "#8B7E74" }}
+                      whileHover={{ color: "#6B8F71" }}
+                      whileTap={{ scale: 0.95 }}
+                    >
+                      <motion.span
+                        style={{ display: "inline-block" }}
+                        animate={isHelped ? { scale: [1, 1.5, 1] } : { scale: 1 }}
+                        transition={{ duration: 0.3, ease: [0.34, 1.56, 0.64, 1] as const }}
+                      >
+                        🌱
+                      </motion.span>
+                      {count} found this helpful
+                    </motion.button>
+                  </div>
+
+                  {/* "for you" indicator on first card */}
+                  {i === 0 && (
+                    <p className="mt-2 text-[11px] font-normal italic" style={{ color: "#8B7E74" }}>
+                      — for you
+                    </p>
+                  )}
+                </motion.div>
+              );
+            })
+          ) : (
+            <motion.div
+              key="empty"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="text-center py-12"
+            >
+              <div
+                className="w-12 h-12 mx-auto rounded-full flex items-center justify-center mb-4"
+                style={{ backgroundColor: "rgba(107,143,113,0.08)" }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B8F71" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
+                  <path d="m22 12-8.97 4.08a2 2 0 0 1-1.66 0L2.4 12" />
+                </svg>
               </div>
-            );
-          })
-        ) : (
-          <div className="text-center py-12">
-            <div className="w-12 h-12 mx-auto rounded-full bg-[var(--moss-soft)] flex items-center justify-center mb-4">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-moss)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
-                <path d="m22 12-8.97 4.08a2 2 0 0 1-1.66 0L2.4 12" />
-              </svg>
-            </div>
-            <p className="text-[14px] text-dusk font-light leading-[1.6]">
-              No memories yet for this — be the first to share<br />one after your next circle.
-            </p>
-          </div>
-        )}
+              <p className="text-[14px] font-light leading-[1.6]" style={{ color: "#8B7E74" }}>
+                No memories yet for this — be the first to share<br />one after your next circle.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );
