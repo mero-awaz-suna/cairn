@@ -12,10 +12,11 @@ CircleStore does all the heavy lifting (matching, DB writes).
 This layer only handles HTTP concerns: auth, input validation, response shape.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 
 from auth import supabase, get_cairn_user
 from db.circle_store import CircleStore
+from persona.core.memory_wall import on_circle_closed
 
 router = APIRouter()
 
@@ -109,6 +110,7 @@ async def request_circle(
 @router.post("/{circle_id}/leave", status_code=status.HTTP_200_OK)
 async def leave_circle(
     circle_id: str,
+    background_tasks: BackgroundTasks,
     cairn_user=Depends(get_cairn_user),
     store: CircleStore = Depends(get_store),
 ):
@@ -149,8 +151,10 @@ async def leave_circle(
     except Exception:
         pass  # non-fatal
 
-    # If everyone has left, close the circle
-    _maybe_close_circle(circle_id)
+    # If everyone has left, close the circle and summarize asynchronously.
+    # This keeps the leave endpoint responsive even when LLM calls are slow.
+    if _maybe_close_circle(circle_id):
+        background_tasks.add_task(on_circle_closed, circle_id)
 
     return {"status": "left", "circle_id": circle_id}
 
@@ -282,10 +286,10 @@ def _get_member_alias(circle_db_id: str, user_id: str) -> str | None:
         return None
 
 
-def _maybe_close_circle(circle_id: str) -> None:
+def _maybe_close_circle(circle_id: str) -> bool:
     """
     Close the circle if all members have left.
-    Fire-and-forget — called after a leave, non-fatal if it fails.
+    Returns True only when this call transitions the circle to closed.
     """
     try:
         remaining = (
@@ -299,5 +303,7 @@ def _maybe_close_circle(circle_id: str) -> None:
             supabase.table("circles").update(
                 {"status": "closed", "closed_at": "now()"}
             ).eq("id", circle_id).execute()
+            return True
+        return False
     except Exception:
-        pass
+        return False

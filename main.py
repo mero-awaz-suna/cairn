@@ -11,6 +11,7 @@ from routers import (
     circles,
     messages,
     memories,
+    memory_wall,
     burdens,
     admin,
     auth,
@@ -140,6 +141,7 @@ app.include_router(journal.router, prefix="/journal", tags=["Journal"])
 app.include_router(circles.router, prefix="/circles", tags=["Circles"])
 app.include_router(messages.router, prefix="/messages", tags=["Messages"])
 app.include_router(memories.router, prefix="/memories", tags=["Memories"])
+app.include_router(memory_wall.router, prefix="/memory-wall", tags=["Memory Wall"])
 app.include_router(burdens.router, prefix="/burdens", tags=["Burdens"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(persona_router, prefix="/persona", tags=["Persona"])
