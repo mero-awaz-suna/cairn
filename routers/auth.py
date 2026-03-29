@@ -20,10 +20,16 @@ class LoginPayload(BaseModel):
 @router.post("/register")
 async def register(payload: RegisterPayload):
     # Check if email already exists
-    existing = supabase.table("users")\
-        .select("id")\
-        .eq("email", payload.email)\
-        .execute()
+    try:
+        existing = supabase.table("users")\
+            .select("id")\
+            .eq("email", payload.email)\
+            .execute()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Database unavailable. Verify SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.",
+        )
 
     if existing.data:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -43,8 +49,11 @@ async def register(payload: RegisterPayload):
     # Single insert into users
     try:
         user = supabase.table("users").insert(user_data).execute()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Registration failed: {str(e)}")
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Registration failed: database is unreachable or misconfigured.",
+        )
 
     if not user.data:
         raise HTTPException(status_code=500, detail="Registration failed")
@@ -78,10 +87,16 @@ async def register(payload: RegisterPayload):
 @router.post("/login")
 async def login(payload: LoginPayload):
     # Find user by email
-    user = supabase.table("users")\
-        .select("id, hashed_password, current_persona, current_stress_level")\
-        .eq("email", payload.email)\
-        .execute()
+    try:
+        user = supabase.table("users")\
+            .select("id, hashed_password, current_persona, current_stress_level")\
+            .eq("email", payload.email)\
+            .execute()
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Login failed: database is unreachable or misconfigured.",
+        )
 
     if not user.data:
         raise HTTPException(status_code=401, detail="Invalid email or password")
