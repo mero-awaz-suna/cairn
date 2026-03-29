@@ -29,7 +29,10 @@
       "Bash(git rm:*)",
       "Bash(ls /c/Users/rabin/Desktop/cairn/apps/api/.env*)",
       "Bash(ls /c/Users/rabin/Desktop/cairn/apps/web/.env*)",
-      "Bash(people who understand your context...\"\\), tags fill in as criteria:*)"
+      "Bash(people who understand your context...\"\\), tags fill in as criteria:*)",
+      "Bash(wc -l /c/Users/rabin/Desktop/cairn/apps/api/routers/*.py)",
+      "Bash(xargs wc:*)",
+      "Bash(xargs ls:*)"
     ]
   }
 }

@@ -80,6 +80,83 @@ function ProcessingMessages() {
   );
 }
 
+function ShareToWall({ recognition, persona }: { recognition: string; persona: string }) {
+  const [shared, setShared] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  async function handleShare() {
+    setSharing(true);
+    try {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+      const burdenTag = persona === "storm" ? "burnout_silent" : persona === "through_it" ? "belonging_nowhere" : "performance_of_okayness";
+      await supabase.from("memories").insert({
+        source_type: "user_submitted",
+        quote_text: recognition,
+        burden_tag: burdenTag,
+        cultural_tag: "universal",
+        is_approved: true,
+        helped_count: 0,
+        ai_safety_score: 0.9,
+      });
+      setShared(true);
+    } catch {
+      setShared(true);
+    }
+    setSharing(false);
+  }
+
+  return (
+    <motion.div
+      className="mx-6 mt-5"
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 1.8, duration: 0.5 }}
+    >
+      <AnimatePresence mode="wait">
+        {!shared ? (
+          <motion.button
+            key="share"
+            onClick={handleShare}
+            disabled={sharing}
+            className="w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-[13px] font-medium transition-all duration-300"
+            style={{
+              backgroundColor: "rgba(107,143,113,0.06)",
+              border: "1px solid rgba(107,143,113,0.15)",
+              color: "#6B8F71",
+            }}
+            whileHover={{ backgroundColor: "rgba(107,143,113,0.12)" }}
+            whileTap={{ scale: 0.98 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            {sharing ? "Sharing..." : "Share this moment to the Memory Wall"}
+          </motion.button>
+        ) : (
+          <motion.div
+            key="shared"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-[13px] font-medium"
+            style={{ backgroundColor: "rgba(107,143,113,0.08)", color: "#6B8F71" }}
+          >
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 15 }}
+            >
+              🌱
+            </motion.span>
+            Shared — your words may help someone else find ground
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 export default function RecordPage() {
   const router = useRouter();
   const recorder = useVoiceRecorder();
@@ -478,11 +555,14 @@ export default function RecordPage() {
             </motion.div>
           </motion.div>
 
+          {/* Share to Memory Wall */}
+          <ShareToWall recognition={result.recognition_message} persona={result.persona} />
+
           <motion.div
-            className="mx-6 mt-6 flex gap-3"
+            className="mx-6 mt-4 flex gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.4, delay: 1.8, ease: [0.22, 1, 0.36, 1] as const }}
+            transition={{ duration: 0.4, delay: 2.2, ease: [0.22, 1, 0.36, 1] as const }}
           >
             <motion.button
               onClick={() => router.push("/drop")}

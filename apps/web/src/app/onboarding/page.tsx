@@ -145,7 +145,7 @@ export default function OnboardingPage() {
       console.warn("Persona onboarding call failed (non-blocking):", err);
     }
 
-    router.push("/home");
+    router.push("/welcome");
   }
 
   return (

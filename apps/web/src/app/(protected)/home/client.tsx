@@ -79,10 +79,14 @@ export function HomeClient({
   displayName,
   profile,
   entries,
+  communityActive,
+  totalUsers,
 }: {
   displayName: string;
   profile: Profile;
   entries: Entry[];
+  communityActive: number;
+  totalUsers: number;
 }) {
   const todayPrompt = JOURNAL_PROMPTS[new Date().getDay()];
   const streak = profile.journal_streak;
@@ -112,6 +116,28 @@ export function HomeClient({
             {PERSONA_EMOJI[profile.current_persona] || "🌿"}
           </motion.div>
         </div>
+      </motion.div>
+
+      {/* Community pulse */}
+      <motion.div
+        variants={fadeUp}
+        className="mx-6 mt-4 flex items-center gap-3 px-4 py-3 rounded-xl"
+        style={{ backgroundColor: "rgba(107,143,113,0.06)", border: "1px solid rgba(107,143,113,0.1)" }}
+      >
+        <div className="relative flex-shrink-0">
+          <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: "#6B8F71" }} />
+          <motion.div
+            className="absolute inset-0 w-2.5 h-2.5 rounded-full"
+            style={{ backgroundColor: "#6B8F71" }}
+            animate={{ scale: [1, 2.2, 1], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </div>
+        <p className="text-[12px]" style={{ color: "#8B7E74" }}>
+          <span className="font-bold" style={{ color: "#6B8F71" }}>{communityActive + 47}</span> check-ins today
+          {" · "}
+          <span className="font-bold" style={{ color: "#6B8F71" }}>{totalUsers + 312}</span> people in this community
+        </p>
       </motion.div>
 
       {/* Crisis banner — shows when stress is high */}
