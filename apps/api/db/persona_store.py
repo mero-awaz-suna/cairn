@@ -188,46 +188,41 @@ def row_to_persona(row: dict) -> UserPersona:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+# Map FastAPI stage values → DB persona_enum values
+_STAGE_TO_PERSONA_ENUM = {
+    "In the storm": "storm",
+    "Finding ground": "ground",
+    "Through it": "through_it",
+}
+
+
 def result_to_entry_row(persona: UserPersona, result: PipelineResult) -> dict:
     """
-    Build the persona_entries insert row from a PipelineResult.
+    Build the user_persona_history insert row from a PipelineResult.
+    Maps to existing columns + the new columns from the migration.
     Called once per memo submission — never updated.
     """
     ef = result.entry_features
     ss = result.stage_scores
-    timing = result.timing
+    stage_val = persona.stage.current.value
+    persona_enum_val = _STAGE_TO_PERSONA_ENUM.get(stage_val, "ground")
 
     row = {
         "user_id": persona.user_id,
-        "day_number": ef.day_number if ef else 0,
-        "hour_of_day": ef.hour_of_day if ef else 0,
-        "memo_duration_s": ef.memo_length_seconds if ef else 0.0,
-        "stage": persona.stage.current.value,
-        "stage_confidence": round(float(persona.stage.confidence), 4),
+        "persona": persona_enum_val,  # existing column (persona_enum: storm/ground/through_it)
+        "stress_level": min(10, max(1, round(ss.stress_score * 10))),  # existing: 1-10
+        # New columns from migration:
+        "stage": stage_val,
         "stress_score": round(float(ss.stress_score), 4),
         "recovery_score": round(float(ss.recovery_score), 4),
-        "crisis_flag": result.crisis_flag,
-        "crisis_reason": result.crisis_reason,
-        "acoustic_ms": timing.get("acoustic_ms"),
-        "linguistic_ms": timing.get("linguistic_ms"),
-        "total_ms": timing.get("total_ms"),
+        "day_number": ef.day_number if ef else 0,
     }
 
     # Linguistic features — only present if extraction succeeded
     if ef:
         ling = ef.linguistic
-        row.update(
-            {
-                "valence": round(float(ling.valence), 4),
-                "arousal": round(float(ling.arousal), 4),
-                "agency_score": round(float(ling.agency_score), 4),
-                "distortion_score": round(float(ling.distortion_score), 4),
-                "coping_score": round(float(ling.coping_score), 4),
-                "urgency_signal": round(float(ling.urgency_signal), 4),
-                "help_seeking_signal": round(float(ling.help_seeking_signal), 4),
-                "stressor_dist": _arr_to_list(ling.stressor_dist),
-            }
-        )
+        row["valence"] = round(float(ling.valence), 4)
+        row["agency_score"] = round(float(ling.agency_score), 4)
 
     return row
 
@@ -290,15 +285,15 @@ class PersonaStore:
         """
         try:
             result = (
-                self._db.table("user_personas")
-                .select("*")
+                self._db.table("persona_state")
+                .select("persona_payload")
                 .eq("user_id", user_id)
                 .single()
                 .execute()
             )
-            if not result.data:
+            if not result.data or not result.data.get("persona_payload"):
                 return None
-            return row_to_persona(result.data)
+            return row_to_persona(result.data["persona_payload"])
         except Exception as e:
             # .single() raises if no row found — treat as None
             logger.debug("Persona not found for user_id=%s: %s", user_id, e)
@@ -317,9 +312,12 @@ class PersonaStore:
         Raises if the user already has a persona (use load() first).
         """
         persona = create_persona(user_id, demographics)
-        row = persona_to_row(persona)
+        payload = persona_to_row(persona)
 
-        self._db.table("user_personas").insert(row).execute()
+        self._db.table("persona_state").insert({
+            "user_id": user_id,
+            "persona_payload": payload,
+        }).execute()
         logger.info("Created persona for user_id=%s", user_id)
         return persona
 
@@ -333,17 +331,20 @@ class PersonaStore:
         Call this after every successful pipeline.process().
 
         Two writes:
-            1. Upsert user_personas   — updates the live persona
-            2. Insert persona_entries — appends to the audit log
+            1. Upsert persona_state        — updates the live persona (JSONB)
+            2. Insert user_persona_history  — appends to the audit log
         """
-        persona_row = persona_to_row(persona)
+        payload = persona_to_row(persona)
         entry_row = result_to_entry_row(persona, result)
 
-        # Upsert persona (create if somehow missing, update otherwise)
-        self._db.table("user_personas").upsert(persona_row).execute()
+        # Upsert persona state (JSONB blob — flexible as the model evolves)
+        self._db.table("persona_state").upsert({
+            "user_id": persona.user_id,
+            "persona_payload": payload,
+        }).execute()
 
-        # Append entry to history
-        self._db.table("persona_entries").insert(entry_row).execute()
+        # Append entry to history (uses existing user_persona_history table)
+        self._db.table("user_persona_history").insert(entry_row).execute()
 
         logger.info(
             "Saved persona: user=%s entry=%d stage=%s crisis=%s",
@@ -358,9 +359,16 @@ class PersonaStore:
         Toggle is_available. Call when user goes online/offline or
         joins/leaves a session.
         """
-        self._db.table("user_personas").update({"is_available": available}).eq(
-            "user_id", user_id
-        ).execute()
+        # Load current payload, update the flag, save back
+        current = self.load(user_id)
+        if current is None:
+            return
+        current.is_available = available
+        payload = persona_to_row(current)
+        self._db.table("persona_state").upsert({
+            "user_id": user_id,
+            "persona_payload": payload,
+        }).execute()
 
     # ── History ───────────────────────────────────────────────────────────────
 
@@ -374,14 +382,18 @@ class PersonaStore:
         Returns raw dicts — the route layer shapes them for the response.
         """
         result = (
-            self._db.table("persona_entries")
+            self._db.table("user_persona_history")
             .select(
-                "created_at, day_number, stage, stress_score, recovery_score, "
-                "valence, agency_score, distortion_score, crisis_flag, total_ms"
+                "recorded_at, day_number, stage, stress_score, recovery_score, "
+                "valence, agency_score"
             )
             .eq("user_id", user_id)
-            .order("created_at", desc=True)
+            .order("recorded_at", desc=True)
             .limit(limit)
             .execute()
         )
-        return result.data or []
+        # Remap recorded_at → created_at for the route layer
+        rows = result.data or []
+        for row in rows:
+            row["created_at"] = row.pop("recorded_at", row.get("created_at"))
+        return rows

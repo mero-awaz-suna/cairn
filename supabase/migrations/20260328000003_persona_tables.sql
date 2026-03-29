@@ -130,11 +130,5 @@ CREATE POLICY "users_own_entries_select"
   ));
 
 -- Service role (backend) can insert entries — no user-facing insert policy needed
--- Admin read access
-CREATE POLICY "admin_read_personas"
-  ON user_personas FOR SELECT
-  USING (auth_has_role('admin'));
-
-CREATE POLICY "admin_read_entries"
-  ON persona_entries FOR SELECT
-  USING (auth_has_role('admin'));
+-- NOTE: Admin read policies deferred until app_role_enum and auth_has_role are
+-- confirmed to exist on remote. Backend uses service_role key (bypasses RLS).
