@@ -326,9 +326,66 @@ export async function dropBurden(formData: FormData) {
   return {
     success: true,
     theme: taxonomy?.display_label || theme.replace(/_/g, " "),
+    themeKey: theme,
     count: count || 1,
     relatedQuote: relatedMemory?.quote_text || null,
   };
+}
+
+// ── Fetch a "Through It" letter for burden theme ──
+export async function fetchLetterForTheme(theme: string, culturalContext: string = "universal") {
+  const supabase = await createClient();
+
+  // Try exact cultural match first
+  const { data: exact } = await supabase
+    .from("through_it_letters")
+    .select("id, content, burden_theme, cultural_tag, helped_count")
+    .eq("burden_theme", theme)
+    .eq("cultural_tag", culturalContext)
+    .eq("is_approved", true)
+    .limit(5);
+
+  let letter = exact && exact.length > 0
+    ? exact[Math.floor(Math.random() * exact.length)]
+    : null;
+
+  // Fall back to any cultural match for same theme
+  if (!letter) {
+    const { data: themeMatch } = await supabase
+      .from("through_it_letters")
+      .select("id, content, burden_theme, cultural_tag, helped_count")
+      .eq("burden_theme", theme)
+      .eq("is_approved", true)
+      .limit(5);
+
+    letter = themeMatch && themeMatch.length > 0
+      ? themeMatch[Math.floor(Math.random() * themeMatch.length)]
+      : null;
+  }
+
+  // Final fallback — any approved letter
+  if (!letter) {
+    const { data: any } = await supabase
+      .from("through_it_letters")
+      .select("id, content, burden_theme, cultural_tag, helped_count")
+      .eq("is_approved", true)
+      .limit(5);
+
+    letter = any && any.length > 0
+      ? any[Math.floor(Math.random() * any.length)]
+      : null;
+  }
+
+  if (letter) {
+    // Increment helped count (fire-and-forget)
+    supabase
+      .from("through_it_letters")
+      .update({ helped_count: (letter.helped_count || 0) + 1 })
+      .eq("id", letter.id)
+      .then(() => {});
+  }
+
+  return letter;
 }
 
 // ── Increment Helped Count on Memory ──

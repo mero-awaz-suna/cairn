@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.concurrency import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer
-from routers import users, journal, circles, messages, memories, burdens, admin, auth
+from routers import users, journal, circles, messages, memories, burdens, admin, auth, facilitator
 
 from auth import supabase
 from db.persona_store import PersonaStore
@@ -87,6 +87,7 @@ app.include_router(memories.router, prefix="/memories", tags=["Memories"])
 app.include_router(burdens.router, prefix="/burdens", tags=["Burdens"])
 app.include_router(admin.router, prefix="/admin", tags=["Admin"])
 app.include_router(persona_router, prefix="/persona", tags=["Persona"])
+app.include_router(facilitator.router, prefix="/facilitator", tags=["Facilitator"])
 
 
 @app.get("/health")

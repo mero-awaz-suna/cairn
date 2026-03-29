@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { BottomNav } from "@/components/bottom-nav";
-import { dropBurden } from "../actions";
+import { dropBurden, fetchLetterForTheme } from "../actions";
 
 type Phase = "write" | "pause" | "reveal";
 
@@ -18,7 +18,8 @@ export default function BurdenDropPage() {
   const [phase, setPhase] = useState<Phase>("write");
   const [count, setCount] = useState(0);
   const [theme, setTheme] = useState("");
-
+  const [themeKey, setThemeKey] = useState("");
+  const [letter, setLetter] = useState<{ content: string } | null>(null);
   const [peerQuote, setPeerQuote] = useState<string | null>(null);
 
   async function handleDrop() {
@@ -36,13 +37,22 @@ export default function BurdenDropPage() {
 
     if (res.error) {
       setTheme("Something you're carrying");
+      setThemeKey("performance_of_okayness");
       setCount(1);
     } else {
       setTheme(res.theme || "Something you're carrying");
+      setThemeKey(res.themeKey || "performance_of_okayness");
       setCount(res.count || 1);
       setPeerQuote(res.relatedQuote || null);
     }
+
     setPhase("reveal");
+
+    // Fetch the "Through It" letter (non-blocking — arrives after count reveal)
+    const extractedKey = res.error ? "performance_of_okayness" : (res.themeKey || "performance_of_okayness");
+    fetchLetterForTheme(extractedKey, "nepali").then((l) => {
+      if (l) setLetter(l);
+    });
   }
 
   return (
@@ -79,7 +89,7 @@ export default function BurdenDropPage() {
               </p>
             </div>
 
-            {/* Text area — borderless, clean */}
+            {/* Text area */}
             <div className="flex-1 relative mb-6">
               <textarea
                 value={text}
@@ -103,7 +113,7 @@ export default function BurdenDropPage() {
               />
             </div>
 
-            {/* "Put it down." button — only visible when there's text */}
+            {/* Button */}
             <motion.div
               className="text-center"
               animate={{
@@ -138,7 +148,6 @@ export default function BurdenDropPage() {
             exit="exit"
             className="flex-1 flex flex-col items-center justify-center px-8"
           >
-            {/* The deliberate pause — smooth breathing animation */}
             <motion.div
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: "#6B8F71" }}
@@ -162,9 +171,10 @@ export default function BurdenDropPage() {
             initial="initial"
             animate="animate"
             exit="exit"
-            className="flex-1 flex flex-col items-center justify-center px-8 text-center"
+            className="flex-1 flex flex-col items-center px-6 overflow-y-auto hide-scrollbar"
+            style={{ paddingTop: "15vh" }}
           >
-            {/* The count — the core emotional moment, scales in dramatically */}
+            {/* The count — core emotional moment */}
             <motion.div
               className="mb-4"
               initial={{ opacity: 0, scale: 0.3 }}
@@ -184,7 +194,7 @@ export default function BurdenDropPage() {
               </span>
             </motion.div>
             <motion.p
-              className="text-[15px] font-light leading-[1.6] max-w-[280px] mb-10"
+              className="text-[15px] font-light leading-[1.6] max-w-[280px] text-center mb-8"
               style={{ color: "#8B7E74" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -193,17 +203,99 @@ export default function BurdenDropPage() {
               people in this community are carrying that exact weight right now.
             </motion.p>
 
-            {/* Peer memory card — arrives after count has landed */}
-            <PeerMemoryCard theme={theme} />
+            {/* "Someone Left This For You" letter */}
+            {letter && (
+              <motion.div
+                className="w-full max-w-[340px] mb-6"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 2.4, ease: [0.22, 1, 0.36, 1] as const }}
+              >
+                <div
+                  className="bg-white rounded-[20px] p-6 relative overflow-hidden"
+                  style={{
+                    boxShadow: "0 4px 24px rgba(44,40,37,0.08)",
+                    borderLeft: "3px solid #6B8F71",
+                  }}
+                >
+                  {/* Subtle top accent */}
+                  <div
+                    className="absolute top-0 right-0 w-[100px] h-[100px] rounded-full"
+                    style={{
+                      background: "radial-gradient(circle, rgba(107,143,113,0.06), transparent 70%)",
+                      transform: "translate(30%, -30%)",
+                    }}
+                  />
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-[0.12em] mb-4"
+                    style={{ color: "#6B8F71" }}
+                  >
+                    Someone left this here for you
+                  </p>
+                  <p
+                    className="text-[15px] leading-[1.75] font-light"
+                    style={{ color: "#2C2825", fontFamily: "var(--font-hand)" }}
+                  >
+                    &ldquo;{letter.content}&rdquo;
+                  </p>
+                  <p className="text-[11px] mt-4 font-medium" style={{ color: "#8B7E74" }}>
+                    — Someone who made it through
+                  </p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Peer memory card (existing feature) */}
+            {peerQuote && !letter && (
+              <motion.div
+                className="w-full max-w-[340px] bg-white rounded-[16px] p-5 text-left mb-6"
+                style={{
+                  boxShadow: "0 2px 12px rgba(44,40,37,0.05)",
+                  borderLeft: "3px solid #6B8F71",
+                }}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 2.4, ease: [0.22, 1, 0.36, 1] as const }}
+              >
+                <p className="font-hand text-[16px] leading-[1.5]" style={{ color: "#2C2825" }}>
+                  {peerQuote}
+                </p>
+                <div className="mt-3">
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-[3px] rounded-[4px]"
+                    style={{ color: "#6B8F71", backgroundColor: "rgba(107,143,113,0.18)" }}
+                  >
+                    {theme.toUpperCase()}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {/* CTA — find your circle */}
+            <motion.a
+              href="/circle"
+              className="w-full max-w-[340px] block text-center py-[14px] rounded-full text-white text-[15px] font-semibold mb-4"
+              style={{
+                backgroundColor: "#6B8F71",
+                boxShadow: "0 4px 20px rgba(107,143,113,0.4)",
+              }}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 3.6, ease: [0.22, 1, 0.36, 1] as const }}
+              whileHover={{ backgroundColor: "#5A7D60" }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Find your circle
+            </motion.a>
 
             {/* Return home */}
             <motion.a
               href="/home"
-              className="mt-8 text-[13px] font-medium transition-colors duration-200"
+              className="text-[13px] font-medium transition-colors duration-200 mb-8"
               style={{ color: "#8B7E74" }}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.4, delay: 3.2, ease: [0.22, 1, 0.36, 1] as const }}
+              transition={{ duration: 0.4, delay: 3.8, ease: [0.22, 1, 0.36, 1] as const }}
               whileHover={{ color: "#6B8F71" }}
             >
               Return home
@@ -214,42 +306,5 @@ export default function BurdenDropPage() {
 
       <BottomNav />
     </div>
-  );
-}
-
-function PeerMemoryCard({ theme }: { theme: string }) {
-  const PEER_MEMORIES: Record<string, string> = {
-    "Career pressure": "The gap between where you are and where everyone expects you to be by now — someone named that yesterday. And 312 people nodded.",
-    "Family weight": "I carry the weight of every meal my mother skipped so I could be here. That sentence showed up in a circle last week.",
-    "The invisible debt": "Someone wrote: 'I can't tell them it's not working. They gave up everything for this.' 183 people felt that.",
-    "Belonging nowhere fully": "Between two worlds, fully home in neither. A circle member said that — and the room went quiet because everyone recognized it.",
-    "Silent burnout": "Some days the hardest part isn't the work — it's pretending the work is the hardest part. 201 people carried that this month.",
-  };
-
-  const memory = PEER_MEMORIES[theme] || PEER_MEMORIES["Career pressure"];
-
-  return (
-    <motion.div
-      className="w-full max-w-[340px] bg-white rounded-[16px] p-5 text-left"
-      style={{
-        boxShadow: "0 2px 12px rgba(44,40,37,0.05)",
-        borderLeft: "3px solid #6B8F71",
-      }}
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 2.9, ease: [0.22, 1, 0.36, 1] as const }}
-    >
-      <p className="font-hand text-[16px] leading-[1.5]" style={{ color: "#2C2825" }}>
-        {memory}
-      </p>
-      <div className="mt-3">
-        <span
-          className="text-[10px] font-bold uppercase tracking-[0.08em] px-2 py-[3px] rounded-[4px]"
-          style={{ color: "#6B8F71", backgroundColor: "rgba(107,143,113,0.18)" }}
-        >
-          {theme.toUpperCase()}
-        </span>
-      </div>
-    </motion.div>
   );
 }
