@@ -1,0 +1,311 @@
+@import "tailwindcss";
+
+:root {
+  --warm-cream: #f4eee6;
+  --white: #ffffff;
+  --stone: #302822;
+  --dusk: #7d6f63;
+  --cloud: #c5b8aa;
+  --cloud-light: #d5cabd;
+  --sand: #e4d8c9;
+  --sand-light: #f1e8dc;
+  --moss: #6f8f6a;
+  --moss-deep: #5b7756;
+  --moss-light: #95b890;
+  --ember: #c97a56;
+  --red-soft: #d45a5a;
+
+  --moss-glow: rgba(111, 143, 106, 0.18);
+  --moss-soft: rgba(111, 143, 106, 0.1);
+  --ember-glow: rgba(201, 122, 86, 0.16);
+  --stone-90: rgba(44, 40, 37, 0.9);
+  --surface-border: #d2c3b2;
+  --card-shadow-soft: 0 10px 30px rgba(48, 40, 34, 0.1);
+
+  --background: var(--warm-cream);
+  --foreground: var(--stone);
+  --deep-lake: var(--stone);
+  --stone-light: #f5f0ea;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background:
+    radial-gradient(circle at 12% 8%, rgba(201, 122, 86, 0.08), transparent 36%),
+    radial-gradient(circle at 88% 14%, rgba(111, 143, 106, 0.1), transparent 32%),
+    var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  transition: filter 0.14s ease, transform 0.14s ease;
+}
+
+button:not(:disabled) {
+  cursor: pointer;
+}
+
+button:not(:disabled):hover,
+button:not(:disabled):focus-visible {
+  filter: brightness(0.98);
+}
+
+.auth-screen {
+  min-height: 100vh;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--warm-cream);
+}
+
+.auth-shell {
+  width: 100%;
+  max-width: 23rem;
+  border-radius: 1.35rem;
+  padding: 1rem;
+  background: var(--white);
+  border: 1px solid var(--sand);
+  box-shadow: 0 2px 12px rgba(44, 40, 37, 0.05);
+}
+
+.auth-glass {
+  border-radius: 1rem;
+  padding: 0.9rem;
+  background: var(--white);
+  border: 1px solid var(--sand);
+}
+
+.auth-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border-radius: 999px;
+  padding: 0.38rem 0.72rem;
+  font-size: 0.79rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--moss-deep);
+  background: var(--moss-soft);
+}
+
+.auth-brand {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5f5248;
+}
+
+.auth-heading {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  font-weight: 400;
+  line-height: 1.12;
+  color: var(--stone);
+}
+
+.auth-subtext {
+  margin-top: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #5f5248;
+}
+
+.auth-field {
+  margin-top: 0.8rem;
+}
+
+.auth-label {
+  display: block;
+  margin-bottom: 0.37rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #5f5248;
+}
+
+.auth-input {
+  width: 100%;
+  border: 1px solid var(--sand);
+  border-radius: 0.78rem;
+  padding: 0.73rem 0.82rem;
+  font-size: 0.95rem;
+  color: var(--stone);
+  background: var(--white);
+  transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.auth-input::placeholder {
+  color: var(--cloud);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px var(--moss-glow);
+}
+
+.auth-password-wrap {
+  position: relative;
+}
+
+.auth-input-with-toggle {
+  padding-right: 4.25rem;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.52rem;
+  transform: translateY(-50%);
+  border: 1px solid var(--sand);
+  border-radius: 0.55rem;
+  padding: 0.24rem 0.48rem;
+  font-size: 0.74rem;
+  line-height: 1;
+  color: var(--dusk);
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.auth-password-toggle svg {
+  width: 1rem;
+  height: 1rem;
+  display: block;
+}
+
+.auth-password-toggle:hover,
+.auth-password-toggle:focus-visible {
+  outline: none;
+  border-color: var(--moss);
+  color: var(--moss-deep);
+  background: var(--sand-light);
+}
+
+.auth-password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auth-meta-row {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  align-items: center;
+  font-size: 0.79rem;
+  color: var(--dusk);
+}
+
+.auth-link {
+  color: var(--moss);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.auth-link:hover,
+.auth-link:focus-visible {
+  color: var(--moss-deep);
+  border-color: var(--moss);
+}
+
+.auth-submit {
+  margin-top: 1rem;
+  width: 100%;
+  border: 0;
+  border-radius: 0.82rem;
+  padding: 0.8rem 0.95rem;
+  font-size: 0.95rem;
+  font-weight: 620;
+  color: var(--white);
+  background: var(--moss);
+  box-shadow: 0 4px 20px rgba(107, 143, 113, 0.4);
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.auth-submit:hover {
+  transform: translateY(-1px);
+  filter: none;
+  background: var(--moss-deep);
+  box-shadow: 0 6px 24px rgba(44, 40, 37, 0.08);
+}
+
+.auth-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+  transform: none;
+  filter: saturate(0.85);
+  box-shadow: none;
+}
+
+.auth-error-text {
+  margin-top: 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(212, 90, 90, 0.4);
+  background: rgba(212, 90, 90, 0.08);
+  padding: 0.6rem 0.7rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: var(--red-soft);
+}
+
+.auth-footnote {
+  margin-top: 0.95rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-align: center;
+  color: #5f5248;
+}
+
+.auth-stone-row {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: center;
+  gap: 0.62rem;
+}
+
+.auth-stone {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 999px;
+  background: var(--sand);
+  box-shadow: 0 1px 6px rgba(44, 40, 37, 0.04);
+}
+
+@media (min-width: 640px) {
+  .auth-screen {
+    padding: 1.35rem;
+  }
+
+  .auth-shell {
+    max-width: 28rem;
+    padding: 1.2rem;
+  }
+
+  .auth-glass {
+    padding: 1.15rem;
+  }
+
+  .auth-meta-row {
+    font-size: 0.82rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth-shell {
+    max-width: 31rem;
+  }
+}

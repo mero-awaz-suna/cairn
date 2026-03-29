@@ -1,0 +1,67 @@
+.main {
+  min-height: 100svh;
+  background: linear-gradient(180deg, #f4eee6 0%, #efe6db 100%);
+}
+
+.content {
+  padding-top: 0;
+  min-height: 100svh;
+}
+
+.homeContent {
+  padding-top: 0;
+  height: 100svh;
+  overflow: hidden;
+}
+
+.mobileLocator {
+  display: none;
+}
+
+.locatorDots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.locatorDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(245, 240, 234, 0.34);
+}
+
+.locatorDotActive {
+  width: 16px;
+  background: rgba(221, 248, 202, 0.95);
+}
+
+@media (max-width: 768px) {
+  .content {
+    padding-top: 0;
+  }
+
+  .homeContent {
+    padding-top: 0;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .mobileLocator {
+    position: fixed;
+    left: 50%;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    transform: translateX(-50%);
+    z-index: 1005;
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 249, 242, 0.28);
+    background: rgba(56, 47, 40, 0.54);
+    padding: 8px 12px;
+    backdrop-filter: blur(8px) saturate(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(120%);
+    pointer-events: none;
+  }
+}
