@@ -2,7 +2,7 @@
 
 import { TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { getStoredToken } from "@/lib/auth-client";
+import { clearStoredAuth, getStoredToken } from "@/lib/auth-client";
 import { buildApiUrl } from "@/lib/api-base";
 import Navbar, { type MenuView } from "@/components/Navbar";
 import FindMyCircle from "@/components/CircleScience";
@@ -71,7 +71,7 @@ export default function Home() {
       const token = getStoredToken();
       if (!token) {
         if (!cancelled) {
-          setIsOnboarded(true);
+          window.location.replace("/login?next=/");
           setIsLoadingOnboardStatus(false);
         }
         return;
@@ -87,7 +87,14 @@ export default function Home() {
 
         if (!cancelled) {
           if (!response.ok) {
-            // If persona status can't be verified, keep onboarding gate active.
+            if (response.status === 401 || response.status === 403) {
+              clearStoredAuth();
+              window.location.replace("/login?next=/");
+              setIsLoadingOnboardStatus(false);
+              return;
+            }
+
+            // If onboarding status can't be verified for non-auth errors, keep onboarding gate active.
             setIsOnboarded(false);
             setIsLoadingOnboardStatus(false);
             return;

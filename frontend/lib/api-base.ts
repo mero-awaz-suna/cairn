@@ -1,7 +1,6 @@
 const RAW_API_BASE = (
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"
 ).replace(/\/$/, "");
-const BROWSER_PROXY_PREFIX = "/api";
 
 function isLoopbackHost(hostname: string) {
   return hostname === "127.0.0.1" || hostname === "localhost";
@@ -31,10 +30,5 @@ export function buildApiUrl(path: string) {
   }
 
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
-
-  if (typeof window !== "undefined") {
-    return `${BROWSER_PROXY_PREFIX}${normalizedPath}`;
-  }
-
   return `${getApiBaseUrl()}${normalizedPath}`;
 }

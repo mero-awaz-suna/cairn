@@ -12,6 +12,37 @@ const AUTH_COOKIE_CANDIDATES = [
 
 const PUBLIC_ROUTES = ["/login", "/register"];
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) {
+    return null;
+  }
+
+  try {
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = JSON.parse(Buffer.from(padded, "base64").toString("utf-8")) as Record<string, unknown>;
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+function isUnexpiredJwt(token: string): boolean {
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    return false;
+  }
+
+  const exp = payload.exp;
+  if (typeof exp !== "number") {
+    return false;
+  }
+
+  const nowInSeconds = Math.floor(Date.now() / 1000);
+  return exp > nowInSeconds;
+}
+
 function isPublicRoute(pathname: string) {
   return PUBLIC_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
@@ -19,7 +50,11 @@ function isPublicRoute(pathname: string) {
 function isAuthenticated(request: NextRequest) {
   return AUTH_COOKIE_CANDIDATES.some((name) => {
     const value = request.cookies.get(name)?.value;
-    return Boolean(value);
+    if (!value) {
+      return false;
+    }
+
+    return isUnexpiredJwt(value);
   });
 }
 
@@ -31,7 +66,11 @@ export function proxy(request: NextRequest) {
   if (!authenticated && !isPublic) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", `${pathname}${search}`);
-    return NextResponse.redirect(loginUrl);
+    const response = NextResponse.redirect(loginUrl);
+    for (const cookieName of AUTH_COOKIE_CANDIDATES) {
+      response.cookies.set(cookieName, "", { path: "/", maxAge: 0 });
+    }
+    return response;
   }
 
   if (authenticated && isPublic) {

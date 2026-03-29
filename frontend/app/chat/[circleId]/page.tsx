@@ -2,7 +2,7 @@
 
 import { FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { getApiBaseUrl } from "@/lib/api-base";
+import { buildApiUrl, getApiBaseUrl } from "@/lib/api-base";
 import { getStoredToken } from "@/lib/auth-client";
 import styles from "./page.module.css";
 
@@ -92,7 +92,7 @@ export default function CircleChatPage() {
       setError("");
 
       try {
-        const enterResponse = await fetch(`/api/circles/${encodeURIComponent(circleId)}/chatroom/enter`, {
+        const enterResponse = await fetch(buildApiUrl(`/circles/${encodeURIComponent(circleId)}/chatroom/enter`), {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
