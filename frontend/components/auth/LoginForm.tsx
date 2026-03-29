@@ -169,9 +169,9 @@ export default function LoginForm() {
       </button>
 
       <div className="mt-4 flex items-center gap-3">
-        <div className="flex-1 h-px bg-stone-300/40" />
-        <span className="text-xs text-stone-400">or</span>
-        <div className="flex-1 h-px bg-stone-300/40" />
+        <div className="flex-1 h-px bg-stone-400/45" />
+        <span className="text-xs font-semibold text-stone-600">or</span>
+        <div className="flex-1 h-px bg-stone-400/45" />
       </div>
 
       <button

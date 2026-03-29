@@ -27,17 +27,19 @@
 .kicker {
   margin: 0 0 10px;
   font-size: 0.82rem;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(232, 220, 196, 0.86);
+  font-family: var(--font-body);
+  font-weight: 700;
 }
 
 .title {
   margin: 0;
-  font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
+  font-family: var(--font-display), Georgia, serif;
   font-size: clamp(2rem, 4.6vw, 4rem);
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
   color: #f3ecde;
   text-shadow: 0 8px 36px rgba(0, 0, 0, 0.45);
 }
@@ -48,6 +50,7 @@
   color: rgba(232, 220, 196, 0.9);
   font-size: clamp(0.94rem, 1.45vw, 1.1rem);
   line-height: 1.7;
+  font-family: var(--font-body);
 }
 
 @media (max-width: 768px) {

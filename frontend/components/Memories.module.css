@@ -2,10 +2,7 @@
   box-sizing: border-box;
   min-height: 100svh;
   padding: 136px 24px 72px;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
-    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
-    linear-gradient(300deg, #a5b86d 0%, #5d9a6d 46%, #398c65 100%);
+  background: #f5f0ea;
 }
 
 .container {
@@ -24,13 +21,13 @@
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.5rem);
   line-height: 1.3;
-  color: var(--stone-light);
+  color: var(--stone);
 }
 
 .sub {
   margin: 0 auto;
   width: min(760px, 100%);
-  color: #ece4d5;
+  color: #5f5248;
   font-size: 0.98rem;
   line-height: 1.7;
 }
@@ -45,8 +42,8 @@
 .tabBtn {
   border: 1px solid transparent;
   border-radius: 10px;
-  background: rgba(11, 38, 41, 0.6);
-  color: #f5eddc;
+  background: var(--white);
+  color: var(--dusk);
   padding: 10px 14px;
   font-size: 0.88rem;
   font-weight: 500;
@@ -56,33 +53,34 @@
 
 .tabBtn:hover,
 .tabBtn:focus-visible {
-  background: rgba(11, 38, 41, 0.85);
-  border-color: rgba(245, 237, 220, 0.4);
+  background: var(--sand-light);
+  border-color: var(--sand);
 }
 
 .tabActive {
-  background: rgba(122, 154, 126, 0.5);
-  border-color: rgba(217, 248, 202, 0.5);
-  color: #ddf8ca;
+  background: var(--moss-soft);
+  border-color: var(--moss);
+  color: var(--moss-deep);
 }
 
 .card {
   border-radius: 18px;
-  border: 1px solid rgba(245, 237, 220, 0.32);
-  background: rgba(11, 38, 41, 0.9);
+  border: 1px solid var(--surface-border);
+  background: #ffffff;
   padding: 24px;
+  box-shadow: var(--card-shadow-soft);
 }
 
 .cardTitle {
   margin: 0 0 8px;
-  color: var(--stone-light);
+  color: var(--stone);
   font-size: 1.1rem;
   font-weight: 600;
 }
 
 .cardSub {
   margin: 0 0 16px;
-  color: #ece4d5;
+  color: #5f5248;
   font-size: 0.88rem;
   line-height: 1.6;
 }
@@ -93,7 +91,7 @@
 }
 
 .label {
-  color: #bcd4bc;
+  color: var(--dusk);
   font-size: 0.86rem;
   font-weight: 600;
   margin-top: 8px;
@@ -102,10 +100,10 @@
 .input,
 .textarea {
   width: 100%;
-  border: 1px solid rgba(245, 237, 220, 0.2);
+  border: 1px solid var(--sand);
   border-radius: 10px;
-  background: rgba(8, 26, 29, 0.6);
-  color: #f5eddc;
+  background: var(--white);
+  color: var(--stone);
   font-size: 0.94rem;
   padding: 11px 12px;
   outline: none;
@@ -114,9 +112,8 @@
 
 .input:focus-visible,
 .textarea:focus-visible {
-  border-color: rgba(217, 248, 202, 0.6);
-  background: rgba(8, 26, 29, 0.9);
-  box-shadow: 0 0 0 3px rgba(217, 248, 202, 0.2);
+  border-color: var(--moss);
+  box-shadow: 0 0 0 3px var(--moss-glow);
 }
 
 .textarea {
@@ -127,9 +124,9 @@
 
 .submitBtn {
   margin-top: 4px;
-  border: 1px solid rgba(122, 154, 126, 0.6);
-  background: rgba(122, 154, 126, 0.2);
-  color: #e7f4e7;
+  border: 1px solid var(--moss);
+  background: var(--moss);
+  color: var(--white);
   border-radius: 10px;
   padding: 11px 14px;
   font-size: 0.86rem;
@@ -140,8 +137,8 @@
 
 .submitBtn:hover,
 .submitBtn:focus-visible {
-  background: rgba(122, 154, 126, 0.32);
-  border-color: rgba(217, 248, 202, 0.8);
+  background: var(--moss-deep);
+  border-color: var(--moss-deep);
 }
 
 .submitBtn:disabled {
@@ -151,7 +148,7 @@
 
 .error {
   margin: 12px 0 0;
-  color: #ffd0d0;
+  color: var(--red-soft);
   font-size: 0.88rem;
   line-height: 1.6;
 }
@@ -159,14 +156,14 @@
 .resultCard {
   margin-top: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(217, 248, 202, 0.24);
-  background: rgba(122, 154, 126, 0.1);
+  border: 1px solid #ddd1c4;
+  background: #faf7f2;
   padding: 12px;
 }
 
 .resultCard p {
   margin: 4px 0;
-  color: #ddf8ca;
+  color: var(--stone-90);
   font-size: 0.88rem;
   line-height: 1.6;
 }
@@ -181,21 +178,21 @@
 
 .memoryItem {
   border-radius: 12px;
-  border: 1px solid rgba(245, 237, 220, 0.22);
-  background: rgba(8, 26, 29, 0.7);
+  border: 1px solid #ddd1c4;
+  background: #faf7f2;
   padding: 12px;
 }
 
 .memoryText {
   margin: 0;
-  color: #f0f4ea;
+  color: var(--stone);
   font-size: 0.95rem;
   line-height: 1.6;
 }
 
 .memoryMeta {
   margin: 8px 0 0;
-  color: #bcd4bc;
+  color: var(--dusk);
   font-size: 0.82rem;
   display: flex;
   gap: 12px;
@@ -212,7 +209,7 @@
 
 .muted {
   margin: 14px 0 0;
-  color: #a8bfb0;
+  color: var(--dusk);
   font-size: 0.88rem;
 }
 

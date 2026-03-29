@@ -2,9 +2,8 @@
 
 import { FormEvent, useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
+import { buildApiUrl } from "@/lib/api-base";
 import styles from "./Memories.module.css";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 type MemoryItem = {
   id: string;
@@ -84,7 +83,7 @@ export default function Memories() {
         ? `?cultural_tag=${encodeURIComponent(culturalFilter.trim())}`
         : "";
 
-      const response = await fetch(`${API_BASE}/memories/${query}`, {
+      const response = await fetch(buildApiUrl(`/memories/${query}`), {
         method: "GET",
       });
 
@@ -130,7 +129,7 @@ export default function Memories() {
     setSubmitResult(null);
 
     try {
-      const response = await fetch(`${API_BASE}/memories/`, {
+      const response = await fetch(buildApiUrl("/memories/"), {
         method: "POST",
         headers: buildAuthHeaders(token, true),
         body: JSON.stringify({
@@ -184,7 +183,7 @@ export default function Memories() {
     setHelpfulResult(null);
 
     try {
-      const response = await fetch(`${API_BASE}/memories/${encodeURIComponent(helpfulMemoryId.trim())}/helpful`, {
+      const response = await fetch(buildApiUrl(`/memories/${encodeURIComponent(helpfulMemoryId.trim())}/helpful`), {
         method: "POST",
         headers: buildAuthHeaders(token),
       });

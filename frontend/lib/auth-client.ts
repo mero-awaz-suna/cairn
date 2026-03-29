@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@/lib/api-base";
+
 const TOKEN_STORAGE_KEY = "cairn.jwt";
 const REFRESH_STORAGE_KEY = "cairn.refresh";
 const USER_STORAGE_KEY = "cairn.user";
@@ -10,11 +12,7 @@ const TOKEN_COOKIE_CANDIDATES = [
   "token",
   "jwt",
 ];
-const GOOGLE_LOGIN_START_URL = "http://127.0.0.1:8000/auth/google/start";
-
-const API_BASE_URL = (
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"
-).replace(/\/$/, "");
+const GOOGLE_LOGIN_START_PATH = "/auth/google/start";
 
 type AuthPayload = {
   email: string;
@@ -35,11 +33,7 @@ function getAuthEndpoint(path: string) {
     return path;
   }
 
-  if (!API_BASE_URL) {
-    return path;
-  }
-
-  return `${API_BASE_URL}${path}`;
+  return buildApiUrl(path);
 }
 
 function extractToken(response: AuthResponse): string | null {
@@ -229,5 +223,5 @@ export async function loginWithGoogle(nextPath = "/") {
   const safeNextPath = nextPath.startsWith("/") ? nextPath : "/";
   const callbackUrl = `${window.location.origin}/login?next=${encodeURIComponent(safeNextPath)}`;
   const next = encodeURIComponent(callbackUrl);
-  window.location.href = `${GOOGLE_LOGIN_START_URL}?next=${next}`;
+  window.location.href = `${buildApiUrl(GOOGLE_LOGIN_START_PATH)}?next=${next}`;
 }

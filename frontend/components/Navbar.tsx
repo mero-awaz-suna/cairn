@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { clearStoredAuth } from "@/lib/auth-client";
+import { clearStoredAuth, getStoredToken } from "@/lib/auth-client";
+import { buildApiUrl } from "@/lib/api-base";
 import CairnLogo from "./CairnLogo";
 import styles from "./Navbar.module.css";
 
@@ -28,6 +29,7 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [isDeletingUser, setIsDeletingUser] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -65,6 +67,41 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
     setProfileMenuOpen(false);
     setMenuOpen(false);
     router.replace("/login");
+  }
+
+  async function handleDeleteUser() {
+    const confirmed = window.confirm("Are you sure you want to delete your user account?\n\nChoose OK for Yes, or Cancel for No.");
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingUser(true);
+
+    try {
+      const token = getStoredToken();
+      const response = await fetch(buildApiUrl("/users/me"), {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const data = (await response.json().catch(() => null)) as { message?: string; detail?: string } | null;
+      if (!response.ok) {
+        throw new Error(data?.message ?? data?.detail ?? "Unable to delete your user account right now.");
+      }
+
+      clearStoredAuth();
+      setProfileMenuOpen(false);
+      setMenuOpen(false);
+      router.replace("/login");
+      router.refresh();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unable to delete your user account right now.";
+      window.alert(message);
+    } finally {
+      setIsDeletingUser(false);
+    }
   }
 
   return (
@@ -115,8 +152,17 @@ export default function Navbar({ activeView, onChangeView, isHome }: NavbarProps
               </svg>
             </button>
             <div id="profile-menu" className={styles.profileDropdown} data-open={profileMenuOpen ? "true" : "false"} role="menu" aria-label="Profile options">
-              <button type="button" className={styles.profileMenuItem} role="menuitem" onClick={handleLogout}>
+              <button type="button" className={styles.profileMenuItem} role="menuitem" onClick={handleLogout} disabled={isDeletingUser}>
                 Log out
+              </button>
+              <button
+                type="button"
+                className={`${styles.profileMenuItem} ${styles.profileMenuDanger}`}
+                role="menuitem"
+                onClick={() => void handleDeleteUser()}
+                disabled={isDeletingUser}
+              >
+                {isDeletingUser ? "Deleting..." : "Delete user"}
               </button>
             </div>
           </div>

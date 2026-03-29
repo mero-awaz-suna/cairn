@@ -2,9 +2,8 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
+import { buildApiUrl } from "@/lib/api-base";
 import styles from "./Journal.module.css";
-
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
 type AudioJournalResponse = {
   entry_id?: string;
@@ -103,7 +102,7 @@ export default function Journal() {
       const formData = new FormData();
       formData.append("audio", audioFile);
 
-      const response = await fetch(`${API_BASE}/journal/audio`, {
+      const response = await fetch(buildApiUrl("/journal/audio"), {
         method: "POST",
         headers: buildAuthHeaders(token),
         body: formData,
@@ -143,7 +142,7 @@ export default function Journal() {
 
     try {
       const token = getStoredToken();
-      const response = await fetch(`${API_BASE}/journal/text`, {
+      const response = await fetch(buildApiUrl("/journal/text"), {
         method: "POST",
         headers: buildAuthHeaders(token, true),
         body: JSON.stringify({
@@ -180,7 +179,7 @@ export default function Journal() {
 
     try {
       const token = getStoredToken();
-      const response = await fetch(`${API_BASE}/journal/history`, {
+      const response = await fetch(buildApiUrl("/journal/history"), {
         method: "GET",
         headers: buildAuthHeaders(token),
       });

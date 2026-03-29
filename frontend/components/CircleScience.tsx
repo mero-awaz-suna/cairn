@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
+import { buildApiUrl } from "@/lib/api-base";
 import styles from "./CircleScience.module.css";
 
-const JOIN_CIRCLE_ENDPOINT = "http://127.0.0.1:8000/circles/join";
-const CIRCLES_BASE_ENDPOINT = "http://127.0.0.1:8000/circles";
+const JOIN_CIRCLE_ENDPOINT = "/circles/join";
+const CIRCLES_BASE_ENDPOINT = "/circles";
 const LAST_CIRCLE_ID_STORAGE_KEY = "cairn.lastCircleId";
 
 type JoinLookupResponse = {
@@ -45,7 +46,7 @@ export default function FindMyCircle() {
 
     try {
       const token = getStoredToken();
-      const response = await fetch(JOIN_CIRCLE_ENDPOINT, {
+      const response = await fetch(buildApiUrl(JOIN_CIRCLE_ENDPOINT), {
         method: "POST",
         headers: buildAuthHeaders(token, true),
         body: "{}",
@@ -65,7 +66,7 @@ export default function FindMyCircle() {
       setJoinCircleId(data.circle_id);
       setCircleStatus(data.status ?? "");
       persistCircleId(data.circle_id);
-      setMessage(data?.message ?? "Circle found. Use the Circle ID below to join.");
+      // setMessage(data?.message ?? "Circle found. Use the Circle ID below to join.");
     } catch (apiError) {
       const apiMessage = apiError instanceof Error ? apiError.message : "Unable to join a circle right now.";
       setError(apiMessage);
@@ -88,7 +89,7 @@ export default function FindMyCircle() {
 
     try {
       const token = getStoredToken();
-      const endpoint = `${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}`;
+      const endpoint = buildApiUrl(`${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}`);
       const response = await fetch(endpoint, {
         method: "GET",
         headers: buildAuthHeaders(token),

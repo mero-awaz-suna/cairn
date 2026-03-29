@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Caveat, DM_Serif_Display, Geist_Mono, Nunito } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const display = DM_Serif_Display({
+  variable: "--font-display",
+  weight: "400",
+  subsets: ["latin"],
+});
+
+const body = Nunito({
+  variable: "--font-body",
+  subsets: ["latin"],
+});
+
+const hand = Caveat({
+  variable: "--font-hand",
+  weight: "500",
   subsets: ["latin"],
 });
 
@@ -25,7 +37,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${display.variable} ${body.variable} ${hand.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

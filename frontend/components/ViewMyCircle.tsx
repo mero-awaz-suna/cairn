@@ -2,9 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { getStoredToken } from "@/lib/auth-client";
+import { buildApiUrl } from "@/lib/api-base";
 import styles from "./ViewMyCircle.module.css";
 
-const CIRCLES_BASE_ENDPOINT = "http://127.0.0.1:8000/circles";
+const CIRCLES_BASE_ENDPOINT = "/circles";
 const LAST_CIRCLE_ID_STORAGE_KEY = "cairn.lastCircleId";
 
 type CircleRecord = {
@@ -65,7 +66,7 @@ export default function ViewMyCircle() {
 
     try {
       const token = getStoredToken();
-      const response = await fetch(`${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}`, {
+      const response = await fetch(buildApiUrl(`${CIRCLES_BASE_ENDPOINT}/${encodeURIComponent(targetCircleId)}`), {
         method: "GET",
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),

@@ -1,9 +1,6 @@
 .section {
   padding: 136px 24px 72px;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
-    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
-    linear-gradient(300deg, #a5b86d 0%, #5d9a6d 46%, #398c65 100%);
+  background: #f5f0ea;
 }
 
 .container {
@@ -13,13 +10,14 @@
 
 .heading {
   margin: 0;
-  color: #102f3a;
+  color: var(--stone);
+  font-family: var(--font-display);
   font-size: clamp(1.7rem, 3.2vw, 2.3rem);
 }
 
 .subtitle {
   margin: 8px 0 16px;
-  color: #184450;
+  color: #5f5248;
   font-size: 0.95rem;
 }
 
@@ -31,9 +29,9 @@
 }
 
 .tabBtn {
-  border: 1px solid rgba(16, 47, 58, 0.2);
-  background: rgba(240, 248, 246, 0.84);
-  color: #16414d;
+  border: 1px solid var(--sand);
+  background: var(--white);
+  color: var(--dusk);
   border-radius: 999px;
   padding: 8px 14px;
   font-size: 0.84rem;
@@ -42,28 +40,28 @@
 }
 
 .tabActive {
-  background: #1c4f5e;
-  color: #f0fbf8;
-  border-color: #1c4f5e;
+  background: var(--moss-soft);
+  color: var(--moss-deep);
+  border-color: var(--moss);
 }
 
 .card {
-  border: 1px solid rgba(16, 47, 58, 0.18);
-  background: rgba(242, 251, 248, 0.88);
+  border: 1px solid var(--surface-border);
+  background: #ffffff;
   border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 10px 24px rgba(16, 47, 58, 0.08);
+  box-shadow: var(--card-shadow-soft);
 }
 
 .cardTitle {
   margin: 0;
-  color: #113643;
+  color: var(--stone);
   font-size: 1.06rem;
 }
 
 .cardSub {
   margin: 6px 0 12px;
-  color: #28535f;
+  color: #5f5248;
   font-size: 0.87rem;
 }
 
@@ -77,10 +75,10 @@
 .timerBadge {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(16, 47, 58, 0.2);
+  border: 1px solid var(--sand);
   border-radius: 999px;
-  background: #edf8f4;
-  color: #1f4c57;
+  background: var(--sand-light);
+  color: var(--dusk);
   padding: 6px 10px;
   font-size: 0.8rem;
 }
@@ -92,10 +90,10 @@
 
 .primaryBtn,
 .submitBtn {
-  border: 1px solid rgba(17, 45, 47, 0.32);
+  border: 1px solid var(--moss);
   border-radius: 10px;
-  background: #153c4d;
-  color: #f1f8f6;
+  background: var(--moss);
+  color: var(--white);
   padding: 9px 14px;
   font-size: 0.84rem;
   font-weight: 600;
@@ -103,10 +101,10 @@
 }
 
 .secondaryBtn {
-  border: 1px solid rgba(17, 45, 47, 0.2);
+  border: 1px solid var(--sand);
   border-radius: 10px;
-  background: #f6fcfa;
-  color: #234f5b;
+  background: var(--white);
+  color: var(--stone);
   padding: 8px 12px;
   font-size: 0.82rem;
   font-weight: 600;
@@ -132,26 +130,26 @@
 .textarea,
 .formBody input {
   width: 100%;
-  border: 1px solid rgba(17, 45, 47, 0.3);
+  border: 1px solid var(--sand);
   border-radius: 8px;
-  background: #f9fffd;
+  background: var(--white);
   padding: 8px 10px;
   font-size: 0.88rem;
-  color: #173041;
+  color: var(--stone);
 }
 
 .resultCard {
   margin-top: 10px;
-  border: 1px solid rgba(17, 45, 47, 0.2);
+  border: 1px solid #ddd1c4;
   border-radius: 8px;
-  background: #edf8f4;
+  background: #faf7f2;
   padding: 10px;
 }
 
 .resultCard p {
   margin: 0 0 5px;
   font-size: 0.83rem;
-  color: #173041;
+  color: var(--stone-90);
 }
 
 .historyHeader {
@@ -164,9 +162,9 @@
 
 .error {
   margin-top: 10px;
-  border: 1px solid rgba(176, 53, 53, 0.5);
-  background: #ffeaea;
-  color: #6b1d1d;
+  border: 1px solid rgba(212, 90, 90, 0.4);
+  background: rgba(212, 90, 90, 0.08);
+  color: var(--red-soft);
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 0.84rem;
@@ -181,9 +179,9 @@
 }
 
 .historyItem {
-  border: 1px solid rgba(17, 45, 47, 0.18);
+  border: 1px solid #ddd1c4;
   border-radius: 8px;
-  background: #edf8f4;
+  background: #faf7f2;
   padding: 10px;
 }
 
@@ -197,12 +195,12 @@
 .historyItem p {
   margin: 0 0 4px;
   font-size: 0.82rem;
-  color: #173041;
+  color: var(--stone-90);
 }
 
 .muted {
   margin: 0;
-  color: #2f4d57;
+  color: var(--dusk);
   font-size: 0.84rem;
 }
 

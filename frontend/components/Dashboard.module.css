@@ -1,9 +1,6 @@
 .section {
   padding: 136px 24px 72px;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.66) 0%, transparent 34%),
-    radial-gradient(circle at 82% 10%, rgba(167, 220, 162, 0.3) 0%, transparent 34%),
-    linear-gradient(300deg, #a5b86d 0%, #5d9a6d 46%, #398c65 100%);
+  background: #f5f0ea;
 }
 
 .container {
@@ -26,13 +23,13 @@
   font-family: var(--font-display);
   font-size: clamp(1.6rem, 3vw, 2.5rem);
   line-height: 1.3;
-  color: var(--stone-light);
+  color: var(--stone);
 }
 
 .sub {
   margin: 0 auto;
   width: min(760px, 100%);
-  color: #ece4d5;
+  color: #5f5248;
   font-size: 0.96rem;
   line-height: 1.72;
 }
@@ -47,15 +44,16 @@
 .card,
 .timelineCard {
   border-radius: 18px;
-  border: 1px solid rgba(245, 237, 220, 0.32);
-  background: rgba(11, 38, 41, 0.9);
+  border: 1px solid var(--surface-border);
+  background: #ffffff;
   padding: 18px;
+  box-shadow: var(--card-shadow-soft);
 }
 
 .card h3,
 .timelineCard h3 {
   margin: 0 0 12px;
-  color: var(--stone-light);
+  color: var(--stone);
   font-size: 1.05rem;
 }
 
@@ -69,20 +67,20 @@
 
 .snapshotList li {
   border-radius: 10px;
-  border: 1px solid rgba(245, 237, 220, 0.22);
-  background: rgba(8, 26, 29, 0.9);
+  border: 1px solid var(--sand);
+  background: var(--sand-light);
   padding: 10px;
   display: grid;
   gap: 4px;
 }
 
 .snapshotList span {
-  color: #bcd4bc;
+  color: var(--dusk);
   font-size: 0.78rem;
 }
 
 .snapshotList strong {
-  color: #f0f4ea;
+  color: var(--stone);
   font-size: 0.86rem;
   font-weight: 600;
   line-height: 1.5;
@@ -98,14 +96,14 @@
 
 .value {
   margin: 0;
-  color: #d8f3de;
+  color: var(--moss-deep);
   font-family: var(--font-display);
   font-size: 1.5rem;
 }
 
 .caption {
   margin: 2px 0 0;
-  color: #e4dac6;
+  color: var(--dusk);
   font-size: 0.78rem;
 }
 
@@ -133,10 +131,10 @@
 .monitorList p {
   margin: 0;
   border-radius: 10px;
-  border: 1px solid rgba(245, 237, 220, 0.22);
-  background: rgba(8, 26, 29, 0.9);
+  border: 1px solid var(--sand);
+  background: var(--sand-light);
   padding: 9px 10px;
-  color: #ece4d5;
+  color: var(--stone-90);
   font-size: 0.84rem;
   line-height: 1.6;
 }
@@ -144,10 +142,10 @@
 .guardrail {
   margin-top: 12px;
   border-radius: 12px;
-  border: 1px solid rgba(255, 74, 74, 0.24);
-  background: rgba(255, 74, 74, 0.08);
+  border: 1px solid rgba(212, 90, 90, 0.22);
+  background: rgba(212, 90, 90, 0.08);
   padding: 10px;
-  color: #ffd3d3;
+  color: var(--red-soft);
   font-size: 0.84rem;
   line-height: 1.6;
 }
@@ -232,9 +230,9 @@
 }
 
 .pageBtn {
-  border: 1px solid rgba(147, 224, 140, 0.45);
-  background: rgba(11, 38, 41, 0.88);
-  color: #ddf8ca;
+  border: 1px solid var(--moss);
+  background: var(--moss);
+  color: var(--white);
   border-radius: 999px;
   padding: 10px 18px;
   font-size: 0.78rem;

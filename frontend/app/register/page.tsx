@@ -18,7 +18,7 @@ export default function RegisterPage() {
               <span className="auth-stone" />
               <span>New Path</span>
             </div>
-            <p className="text-[0.73rem] text-stone-200/85">Cairn</p>
+            <p className="auth-brand">Cairn</p>
           </div>
 
           {/* The headline and helper copy are balanced to stay readable even when the keyboard is open on small screens. */}

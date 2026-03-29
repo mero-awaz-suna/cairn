@@ -18,7 +18,7 @@ export default function LoginPage() {
               <span className="auth-stone" />
               <span>Welcome </span>
             </div>
-            <p className="text-[0.73rem] text-stone-200/85">Cairn</p>
+            <p className="auth-brand">Cairn</p>
           </div>
 
           {/* Keep the opening copy short, especially on phones, so the form remains visible without overwhelming the screen. */}
