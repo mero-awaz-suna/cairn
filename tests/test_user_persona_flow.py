@@ -54,7 +54,7 @@ def _pick_memos(memo_dir: str, count: int = 5) -> list[str]:
 
 
 def _register_user() -> tuple[str, str]:
-    email = f"persona_test_his@example.com"
+    email = f"persona_test_her@example.com"
     password = "TestPassword123!"
 
     payload = {

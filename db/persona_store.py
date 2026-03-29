@@ -43,16 +43,19 @@ class PersonaStore:
         persona_table: str = "persona_state",
         history_table: str = "user_persona_history",
         users_table: str = "users",
+        user_personas_table: str = "user_personas",
     ):
         self.client = client
         self.persona_table = persona_table
         self.history_table = history_table
         self.users_table = users_table
+        self.user_personas_table = user_personas_table
 
     def create(self, user_id: str, demographics: UserDemographics) -> UserPersona:
         """Create and persist a new persona for a user."""
         persona = create_persona(user_id=user_id, demographics=demographics)
         self._upsert_persona_state(persona)
+        self._upsert_user_persona_projection(persona)
         self._sync_users_from_persona(persona)
         return persona
 
@@ -93,6 +96,7 @@ class PersonaStore:
                 - entry_features (optional)
         """
         self._upsert_persona_state(persona)
+        self._upsert_user_persona_projection(persona)
         self._sync_users_from_persona(persona, result=result)
         self._insert_history_row(persona, result)
 
@@ -149,6 +153,51 @@ class PersonaStore:
         self.client.table(self.persona_table).upsert(
             payload, on_conflict="user_id"
         ).execute()
+
+    def _upsert_user_persona_projection(self, persona: UserPersona) -> None:
+        """
+        Keep user_personas in sync for clustering and circle matching.
+
+        This is a flattened projection of UserPersona optimized for query-time
+        matching logic and clustering jobs.
+        """
+        row = {
+            "user_id": persona.user_id,
+            "age_group": persona.demographics.age_group.value,
+            "occupation": persona.demographics.occupation.value,
+            "industry": persona.demographics.industry,
+            "language_code": persona.demographics.language_code,
+            "region_code": persona.demographics.region_code,
+            "living_situation": persona.demographics.living_situation,
+            "acoustic_short": self._array_to_list(persona.vectors.acoustic_short),
+            "acoustic_long": self._array_to_list(persona.vectors.acoustic_long),
+            "linguistic_short": self._array_to_list(persona.vectors.linguistic_short),
+            "linguistic_long": self._array_to_list(persona.vectors.linguistic_long),
+            "identity_vec": self._array_to_list(persona.vectors.identity),
+            "behavioral": self._array_to_list(persona.vectors.behavioral),
+            "baseline_mean": self._array_to_list(persona.baseline.feature_mean),
+            "baseline_std": self._array_to_list(persona.baseline.feature_std),
+            "baseline_n_samples": int(persona.baseline.n_samples),
+            "stage": persona.stage.current.value,
+            "stage_confidence": float(persona.stage.confidence),
+            "stressor_dist": self._array_to_list(persona.stressor_dist),
+            "cluster_id": persona.cluster_id,
+            "entry_count": int(persona.entry_count),
+            "last_entry_at": self._unix_to_iso(persona.last_entry_time),
+            "is_available": bool(persona.is_available),
+            "updated_at": self._now_iso(),
+        }
+
+        try:
+            self.client.table(self.user_personas_table).upsert(
+                row, on_conflict="user_id"
+            ).execute()
+        except Exception as exc:
+            logger.warning(
+                "user_personas projection sync failed for user=%s: %s",
+                persona.user_id,
+                exc,
+            )
 
     def _sync_users_from_persona(
         self, persona: UserPersona, result: Any = None
@@ -350,6 +399,12 @@ class PersonaStore:
     @staticmethod
     def _now_iso() -> str:
         return datetime.now(timezone.utc).isoformat()
+
+    @staticmethod
+    def _unix_to_iso(ts: float) -> str:
+        if not ts:
+            return datetime.now(timezone.utc).isoformat()
+        return datetime.fromtimestamp(float(ts), tz=timezone.utc).isoformat()
 
     @staticmethod
     def _stage_to_legacy_persona(stage: Stage) -> str:
