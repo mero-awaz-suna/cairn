@@ -94,7 +94,7 @@ export default function OnboardingPage() {
 
     if (!user) { router.push("/login"); return; }
 
-    // Use upsert to handle missing profile edge case
+    // Save all onboarding data + demographics to users table
     const { error } = await supabase
       .from("users")
       .upsert(
@@ -102,6 +102,11 @@ export default function OnboardingPage() {
           supabase_auth_id: user.id,
           academic_stage: academicStage,
           primary_burden: primaryBurden,
+          age_group: ageGroup || null,
+          occupation: occupation || null,
+          living_situation: livingSituation || null,
+          language_code: "en",
+          region_code: "US",
           consented_to_terms_at: new Date().toISOString(),
           consented_to_ai_at: new Date().toISOString(),
         },
