@@ -3,15 +3,19 @@ import json
 import sys
 import numpy as np
 import google.generativeai as genai
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from persona.core.models import LinguisticFeatures
 
-GOOGLE_API_KEY = "AIzaSyAqLfocB-JiKCpJRNmMNY0HZewcLZ_HBII"
+# Load backend environment variables from the local .env file.
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env")
+GOOGLE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 
-genai.configure(api_key=GOOGLE_API_KEY)
+if GOOGLE_API_KEY:
+    genai.configure(api_key=GOOGLE_API_KEY)
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +92,7 @@ def extract_linguistic_features(transcript: str) -> LinguisticFeatures:
     system_instruction = """
     You are an expert clinical linguistic analyzer processing transcripts of voice memos.
     Extract the 18 specific psychological dimensions from the text.
-    
+
     CRITICAL CONSTRAINTS:
     1. The temporal orientation fields (past, present, future) MUST sum to exactly 1.0.
     2. The 8 stressor fields MUST sum to exactly 1.0. Apportion the weight based on what the user is talking about.
